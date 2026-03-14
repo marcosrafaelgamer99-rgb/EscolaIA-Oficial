@@ -1,0 +1,169 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Montserrat", sans-serif;
+  
+  --color-bg-deep: #0a0a0a;
+  --color-emerald-glow: #10b981;
+  --color-emerald-dark: #064e3b;
+  --color-glass: rgba(255, 255, 255, 0.02);
+  --color-glass-border: rgba(255, 255, 255, 0.05);
+}
+
+@layer base {
+  body {
+    @apply bg-bg-deep text-white font-sans antialiased;
+  }
+  
+  h1, h2, h3, h4 {
+    @apply font-display font-bold tracking-tight text-white;
+  }
+}
+
+.mesh-gradient {
+  background-color: #0a0a0a;
+  background-image: 
+    radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.03) 0%, transparent 70%);
+  background-attachment: fixed;
+  position: relative;
+}
+
+.mesh-gradient::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url('./assets/cerebro.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 40%;
+  opacity: 0.05;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.glass-panel {
+  @apply bg-glass backdrop-blur-2xl border border-glass-border;
+}
+
+.xbox-card {
+  @apply bg-[#121212] border border-white/5 rounded-2xl transition-all duration-300 relative overflow-hidden;
+}
+
+.xbox-card:hover {
+  @apply border-emerald-glow/40 scale-105;
+  box-shadow: 0 0 30px rgba(16, 185, 129, 0.15);
+}
+
+.typewriter-cursor::after {
+  content: '|';
+  @apply text-emerald-glow ml-1;
+  animation: blink 0.8s infinite;
+}
+
+@keyframes flash-green {
+  0% { background-color: rgba(16, 185, 129, 0); }
+  10% { background-color: rgba(16, 185, 129, 0.1); }
+  100% { background-color: rgba(16, 185, 129, 0); }
+}
+
+.selection-flash {
+  animation: flash-green 0.6s ease-out forwards;
+}
+
+.logo-gradient {
+  background: linear-gradient(to bottom, #ffffff 0%, #10b981 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+@keyframes scan {
+  0% { top: 0%; }
+  100% { top: 100%; }
+}
+
+.scan-line {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(to right, transparent, #10b981, transparent);
+  box-shadow: 0 0 20px 2px rgba(16, 185, 129, 0.8);
+  z-index: 20;
+  animation: scan 2s ease-in-out infinite alternate;
+}
+
+.scan-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(16, 185, 129, 0.1);
+  pointer-events: none;
+  z-index: 10;
+}
+
+@keyframes pulse-emerald {
+  0% { border-color: rgba(6, 78, 59, 0.5); box-shadow: 0 0 0 0 rgba(6, 78, 59, 0.4); }
+  70% { border-color: rgba(16, 185, 129, 0.8); box-shadow: 0 0 0 10px rgba(6, 78, 59, 0); }
+  100% { border-color: rgba(6, 78, 59, 0.5); box-shadow: 0 0 0 0 rgba(6, 78, 59, 0); }
+}
+
+.processing-pulse {
+  animation: pulse-emerald 2s infinite;
+  border-width: 2px;
+}
+
+@keyframes pop-check-in-out {
+  0% { transform: scale(0); opacity: 0; }
+  15% { transform: scale(1.2); opacity: 1; }
+  25% { transform: scale(1); opacity: 1; }
+  85% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0.5); opacity: 0; }
+}
+
+.success-pop {
+  animation: pop-check-in-out 3s ease-in-out forwards;
+}
+
+@keyframes dot-glow {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.2); color: #10b981; }
+}
+
+.dot-loader span {
+  animation: dot-glow 1.4s infinite;
+  display: inline-block;
+}
+
+.dot-loader span:nth-child(2) { animation-delay: 0.2s; }
+.dot-loader span:nth-child(3) { animation-delay: 0.4s; }
+
+.glow-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.glow-card::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  background: linear-gradient(45deg, var(--color-neon-blue), var(--color-electric-purple));
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  z-index: -1;
+  border-radius: inherit;
+  filter: blur(10px);
+}
+
+.glow-card:hover::before {
+  opacity: 0.3;
+}
+
+@utility no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
