@@ -1,11 +1,16 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Send, User, Bot, Loader2, Sparkles, BookOpen, Calculator, History, Globe, FlaskConical, Languages, ShieldCheck, UserCheck, Image as ImageIcon, X, FileSearch, Menu, Search, ExternalLink, Copy, Check, Key, LogOut } from 'lucide-react';
+import React, { useState, useRef, useEffect, lazy, Suspense } from 'react';
+import { Send, User, Bot, Loader2, Sparkles, BookOpen, Calculator, History, Globe, FlaskConical, Languages, ShieldCheck, UserCheck, Image as ImageIcon, X, FileSearch, Menu, Search, ExternalLink, Copy, Check, Key, LogOut, Timer, Play, Pause, RotateCcw, FileText, GraduationCap, StickyNote, ArrowRightLeft, Lightbulb, ImagePlus, Focus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import ReactMarkdown from 'react-markdown';
 import { chatWithAI } from './services/gemini';
 import { AUTHORIZED_CODES } from './codigos';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+
+const CalculatorModal = lazy(() => import('./components/Modals/CalculatorModal'));
+const NotesModal = lazy(() => import('./components/Modals/NotesModal'));
+const ConverterModal = lazy(() => import('./components/Modals/ConverterModal'));
+const ImageGeneratorModal = lazy(() => import('./components/Modals/ImageGeneratorModal'));
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -62,6 +67,14 @@ const SPECIAL_TOOLS = [
     prompt: 'MODO DETECTOR E HUMANIZADOR ATIVADO. Analise se o texto abaixo foi feito por IA ou Humano e depois reescreva-o para ficar MUITO humanizado:' 
   },
   { 
+    label: 'Modo Simulado', 
+    icon: GraduationCap, 
+    color: 'from-purple-500/20 to-purple-900/40',
+    glow: 'shadow-purple-500/50',
+    description: 'Teste seus conhecimentos com questões de múltipla escolha.',
+    prompt: 'MODO SIMULADO ATIVADO. Gere 3 perguntas de múltipla escolha sobre o assunto que estamos discutindo para testar meus conhecimentos. Não dê as respostas de imediato, aguarde eu tentar responder:' 
+  },
+  { 
     label: 'Modo Estudar', 
     icon: BookOpen, 
     color: 'from-indigo-500/20 to-indigo-900/40',
@@ -72,7 +85,7 @@ const SPECIAL_TOOLS = [
 ];
 
 const QUICK_ACTIONS = [
-  { label: 'Resumir Texto', icon: Sparkles, prompt: 'Pode resumir este texto para mim em tópicos principais?' },
+  { label: 'Gerar Resumo', icon: FileText, prompt: 'Por favor, faça um resumo em tópicos dos pontos mais importantes que discutimos nesta conversa até agora.' },
   { label: 'Explicar Conceito', icon: BookOpen, prompt: 'Pode me explicar de forma simples o que é [insira o conceito]?' },
 ];
 
@@ -121,6 +134,78 @@ export default function App() {
   const [isFlashing, setIsFlashing] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // New features state
+  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
+  const [calcInput, setCalcInput] = useState('');
+  const [pomodoroTime, setPomodoroTime] = useState(25 * 60);
+  const [isPomodoroActive, setIsPomodoroActive] = useState(false);
+  const [isNotesOpen, setIsNotesOpen] = useState(false);
+  const [quickNotes, setQuickNotes] = useState(() => localStorage.getItem('escolaia_quick_notes') || '');
+  const [isConverterOpen, setIsConverterOpen] = useState(false);
+  const [convValue, setConvValue] = useState('');
+  const [convType, setConvType] = useState('m_cm');
+  const [convResult, setConvResult] = useState('');
+  const [isImageGeneratorOpen, setIsImageGeneratorOpen] = useState(false);
+  const [imagePrompt, setImagePrompt] = useState('');
+  const [isFocusMode, setIsFocusMode] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem('escolaia_quick_notes', quickNotes);
+  }, [quickNotes]);
+
+  const handleConvert = () => {
+    const val = parseFloat(convValue);
+    if (isNaN(val)) return setConvResult('Valor inválido');
+    switch (convType) {
+      case 'm_cm': setConvResult(`${val * 100} cm`); break;
+      case 'cm_m': setConvResult(`${val / 100} m`); break;
+      case 'km_m': setConvResult(`${val * 1000} m`); break;
+      case 'c_f': setConvResult(`${(val * 9/5) + 32} °F`); break;
+      case 'f_c': setConvResult(`${(val - 32) * 5/9} °C`); break;
+      case 'kg_g': setConvResult(`${val * 1000} g`); break;
+      default: setConvResult('---');
+    }
+  };
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isPomodoroActive && pomodoroTime > 0) {
+      interval = setInterval(() => {
+        setPomodoroTime((prev) => prev - 1);
+      }, 1000);
+    } else if (pomodoroTime === 0) {
+      setIsPomodoroActive(false);
+      alert('Tempo do Pomodoro esgotado! Bom trabalho, faça uma pausa.');
+    }
+    return () => clearInterval(interval);
+  }, [isPomodoroActive, pomodoroTime]);
+
+  const togglePomodoro = () => setIsPomodoroActive(!isPomodoroActive);
+  const resetPomodoro = () => {
+    setIsPomodoroActive(false);
+    setPomodoroTime(25 * 60);
+  };
+  const formatTime = (timeInSeconds: number) => {
+    const minutes = Math.floor(timeInSeconds / 60);
+    const seconds = timeInSeconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  const handleCalcClick = (val: string) => {
+    if (val === '=') {
+      try {
+        // eslint-disable-next-line no-eval
+        setCalcInput(eval(calcInput).toString());
+      } catch {
+        setCalcInput('Erro');
+      }
+    } else if (val === 'C') {
+      setCalcInput('');
+    } else {
+      setCalcInput((prev) => prev + val);
+    }
+  };
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -455,6 +540,37 @@ export default function App() {
       </div>
 
       <div className="space-y-10 flex-1 overflow-y-auto pr-2 no-scrollbar">
+        {/* Pomodoro Timer */}
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur-md">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+              <Timer size={12} /> Foco Pomodoro
+            </h2>
+            <button onClick={resetPomodoro} className="text-slate-500 hover:text-white transition-colors" title="Reiniciar">
+              <RotateCcw size={12} />
+            </button>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className={cn(
+              "text-3xl font-display font-light tabular-nums tracking-tight transition-colors",
+              isPomodoroActive ? "text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "text-slate-300"
+            )}>
+              {formatTime(pomodoroTime)}
+            </span>
+            <button 
+              onClick={togglePomodoro}
+              className={cn(
+                "w-10 h-10 rounded-full flex items-center justify-center transition-all",
+                isPomodoroActive 
+                  ? "bg-red-500/20 text-red-500 hover:bg-red-500/30" 
+                  : "bg-emerald-glow/20 text-emerald-400 hover:bg-emerald-glow/30"
+              )}
+            >
+              {isPomodoroActive ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" className="ml-1" />}
+            </button>
+          </div>
+        </div>
+
         <div>
           <h2 className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-6">Configurações</h2>
           <div className="space-y-6 px-1">
@@ -668,9 +784,11 @@ export default function App() {
       isFlashing && "selection-flash"
     )}>
       {/* Sidebar - Desktop */}
-      <aside className="hidden md:flex flex-col w-72 glass-panel p-8 m-4 rounded-3xl shadow-2xl shadow-black/50">
-        <SidebarContent />
-      </aside>
+      {!isFocusMode && (
+        <aside className="hidden md:flex flex-col w-72 glass-panel p-8 m-4 rounded-3xl shadow-2xl shadow-black/50 transition-all duration-500 ease-in-out">
+          <SidebarContent />
+        </aside>
+      )}
 
       {/* Sidebar - Mobile Drawer */}
       <AnimatePresence>
@@ -716,6 +834,106 @@ export default function App() {
             <X size={24} />
           </button>
         </header>
+
+        {/* Floating Action Buttons Desktop/Mobile */}
+        <div className="absolute top-20 right-4 md:top-8 md:right-8 z-40 flex flex-col gap-3">
+          <button 
+            onClick={() => setIsFocusMode(!isFocusMode)}
+            className={cn(
+              "p-3 rounded-full backdrop-blur-md shadow-lg transition-all active:scale-95 min-w-[44px] min-h-[44px] flex items-center justify-center",
+              isFocusMode 
+                ? "bg-amber-500 text-black shadow-[0_0_15px_rgba(245,158,11,0.5)]" 
+                : "bg-white/5 border border-white/10 text-slate-400 hover:text-amber-500 hover:bg-white/10"
+            )}
+            title="Modo Foco"
+          >
+            <Focus size={20} />
+          </button>
+
+          <button 
+            onClick={() => setIsCalculatorOpen(!isCalculatorOpen)}
+            className={cn(
+              "p-3 rounded-full backdrop-blur-md shadow-lg transition-all active:scale-95 min-w-[44px] min-h-[44px] flex items-center justify-center",
+              isCalculatorOpen 
+                ? "bg-emerald-glow text-black" 
+                : "bg-white/5 border border-white/10 text-slate-400 hover:text-emerald-glow hover:bg-white/10"
+            )}
+            title="Calculadora Científica"
+          >
+            <Calculator size={20} />
+          </button>
+          
+          <button 
+            onClick={() => setIsNotesOpen(!isNotesOpen)}
+            className={cn(
+              "p-3 rounded-full backdrop-blur-md shadow-lg transition-all active:scale-95 min-w-[44px] min-h-[44px] flex items-center justify-center",
+              isNotesOpen 
+                ? "bg-indigo-500 text-white" 
+                : "bg-white/5 border border-white/10 text-slate-400 hover:text-indigo-400 hover:bg-white/10"
+            )}
+            title="Anotações Rápidas"
+          >
+            <StickyNote size={20} />
+          </button>
+
+          <button 
+            onClick={() => setIsConverterOpen(!isConverterOpen)}
+            className={cn(
+              "p-3 rounded-full backdrop-blur-md shadow-lg transition-all active:scale-95 min-w-[44px] min-h-[44px] flex items-center justify-center",
+              isConverterOpen 
+                ? "bg-purple-500 text-white" 
+                : "bg-white/5 border border-white/10 text-slate-400 hover:text-purple-400 hover:bg-white/10"
+            )}
+            title="Conversor de Unidades"
+          >
+            <ArrowRightLeft size={20} />
+          </button>
+
+          <button 
+            onClick={() => setIsImageGeneratorOpen(!isImageGeneratorOpen)}
+            className={cn(
+              "p-3 rounded-full backdrop-blur-md shadow-lg transition-all active:scale-95 min-w-[44px] min-h-[44px] flex items-center justify-center",
+              isImageGeneratorOpen 
+                ? "bg-blue-500 text-white" 
+                : "bg-white/5 border border-white/10 text-slate-400 hover:text-blue-400 hover:bg-white/10"
+            )}
+            title="Gerador de Imagens Educacionais"
+          >
+            <ImagePlus size={20} />
+          </button>
+        </div>
+
+        <Suspense fallback={<div className="hidden">Loading...</div>}>
+          <CalculatorModal 
+            isOpen={isCalculatorOpen} 
+            onClose={() => setIsCalculatorOpen(false)} 
+            calcInput={calcInput} 
+            handleCalcClick={handleCalcClick} 
+          />
+          <NotesModal 
+            isOpen={isNotesOpen} 
+            onClose={() => setIsNotesOpen(false)} 
+            quickNotes={quickNotes} 
+            setQuickNotes={setQuickNotes} 
+          />
+          <ConverterModal 
+            isOpen={isConverterOpen} 
+            onClose={() => setIsConverterOpen(false)} 
+            convType={convType} 
+            setConvType={setConvType} 
+            convValue={convValue} 
+            setConvValue={setConvValue} 
+            convResult={convResult} 
+            handleConvert={handleConvert} 
+          />
+          <ImageGeneratorModal 
+            isOpen={isImageGeneratorOpen} 
+            onClose={() => setIsImageGeneratorOpen(false)} 
+            imagePrompt={imagePrompt} 
+            setImagePrompt={setImagePrompt} 
+            handleSend={handleSend} 
+          />
+        </Suspense>
 
         {/* Chat Area */}
         <div 
@@ -774,12 +992,37 @@ export default function App() {
                     animate={{ opacity: 1 }}
                     transition={{ delay: 1 + i * 0.1 }}
                     onClick={() => handleSend(action.prompt)}
-                    className="px-6 py-3 rounded-xl glass-panel text-slate-400 text-xs hover:text-white hover:border-white/20 transition-all active:scale-95"
+                    className="px-6 py-3 rounded-xl glass-panel text-slate-400 text-xs hover:text-white hover:border-white/20 transition-all active:scale-95 flex items-center gap-2"
                   >
+                    <action.icon size={14} className="text-emerald-500/70" />
                     {action.label}
                   </motion.button>
                 ))}
               </div>
+
+              {/* Smart Suggestions for 8th/9th grade */}
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.2 }}
+                className="w-full max-w-3xl px-4 mt-8 flex flex-col items-center gap-3"
+              >
+                <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
+                  <Lightbulb size={12} className="text-yellow-500/70" />
+                  <span>Experimente perguntar</span>
+                </div>
+                <div className="flex flex-wrap justify-center gap-2">
+                  <button onClick={() => handleSend('Me explique a Tabela Periódica como se fosse um meme de internet.')} className="bg-white/5 hover:bg-white/10 border border-white/5 rounded-full px-4 py-2 text-xs text-slate-400 hover:text-white transition-colors">
+                    🧪 Tabela Periódica como meme
+                  </button>
+                  <button onClick={() => handleSend('Como a energia cinética funciona? Use o Homem-Aranha como exemplo.')} className="bg-white/5 hover:bg-white/10 border border-white/5 rounded-full px-4 py-2 text-xs text-slate-400 hover:text-white transition-colors">
+                    🕷️ Energia Cinética (Homem-Aranha)
+                  </button>
+                  <button onClick={() => handleSend('Crie uma rima curta para eu decorar a fórmula de Bhaskara.')} className="bg-white/5 hover:bg-white/10 border border-white/5 rounded-full px-4 py-2 text-xs text-slate-400 hover:text-white transition-colors">
+                    🎵 Rima da Fórmula de Bhaskara
+                  </button>
+                </div>
+              </motion.div>
             </div>
           )}
 
@@ -832,8 +1075,19 @@ export default function App() {
                       : "bg-white/[0.02] border-white/5 text-slate-300 font-light",
                     isLoading && messages[messages.length - 1].id === message.id && "processing-pulse"
                   )}>
-                    <div className="markdown-body">
-                      <ReactMarkdown>{message.content}</ReactMarkdown>
+                    <div className="markdown-body space-y-4">
+                      {message.content.includes('[IMAGEM]https://image.pollinations.ai') ? (
+                        <>
+                          <ReactMarkdown>
+                            {message.content.split('[IMAGEM]')[0]}
+                          </ReactMarkdown>
+                          <div className="rounded-2xl overflow-hidden border border-white/10 mt-4 max-w-lg shadow-2xl">
+                            <img src={message.content.split('[IMAGEM]')[1].trim()} alt="Generated Content" className="w-full h-auto" />
+                          </div>
+                        </>
+                      ) : (
+                        <ReactMarkdown>{message.content}</ReactMarkdown>
+                      )}
                     </div>
                     {isLoading && messages[messages.length - 1].id === message.id && message.role === 'model' && (
                       <div className="mt-4 flex items-center gap-1 dot-loader">
@@ -907,7 +1161,7 @@ export default function App() {
         </div>
 
         {/* Input Area */}
-        <div className="p-6 md:p-12">
+        <div className="p-4 md:p-8 sticky bottom-0 z-40 bg-bg-deep/90 backdrop-blur-xl border-t border-white/5 md:border-transparent md:bg-transparent md:backdrop-blur-none pb-safe">
           <div className="max-w-4xl mx-auto relative">
             {selectedImage && (
               <motion.div 
@@ -965,9 +1219,11 @@ export default function App() {
                 <Send size={24} />
               </button>
             </div>
-            <p className="text-center mt-6 text-[10px] text-slate-600 font-medium tracking-widest uppercase">
-              EscolaIA v2.0 • Powered by Gemini Next-Gen
-            </p>
+            {!isFocusMode && (
+              <p className="text-center mt-6 text-[10px] text-slate-500 font-medium tracking-widest uppercase transition-opacity duration-300">
+                EscolaIA v3.0 - Em Desenvolvimento | Marcos Rafael (8º B)
+              </p>
+            )}
           </div>
         </div>
       </main>
