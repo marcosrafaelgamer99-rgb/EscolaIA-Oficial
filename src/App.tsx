@@ -225,8 +225,8 @@ export default function App() {
 
   if (!isAuthenticated) {
     return (
-      <div className="h-screen w-screen bg-[#050505] flex items-center justify-center p-6 font-sans overflow-hidden relative">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(16,185,129,0.05)_0%,transparent_70%)] pointer-events-none" />
+      <div className="h-screen w-screen bg-[#0a0a0a] flex items-center justify-center p-6 font-sans overflow-hidden relative">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(16,185,129,0.03)_0%,transparent_70%)] pointer-events-none" />
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -242,11 +242,11 @@ export default function App() {
                 value={authCode}
                 onChange={(e) => setAuthCode(e.target.value)}
                 placeholder="Código de Acesso"
-                className="w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-4 text-center text-lg text-white outline-none focus:border-emerald-glow transition-all duration-500"
+                className="w-full bg-white/5 border border-white/10 rounded-[16px] px-6 py-4 text-center text-lg text-white outline-none focus:border-emerald-glow transition-all duration-500"
               />
               <button 
                 type="submit"
-                className="w-full bg-emerald-glow text-black font-black py-4 rounded-2xl hover:scale-[1.02] active:scale-95 transition-all shadow-[0_0_30px_rgba(16,185,129,0.2)]"
+                className="w-full bg-emerald-glow text-black font-black py-4 rounded-[16px] hover:scale-[1.02] active:scale-95 transition-all shadow-[0_0_30px_rgba(16,185,129,0.2)]"
               >
                 ENTRAR
               </button>
@@ -265,116 +265,122 @@ export default function App() {
 
   return (
     <div className={cn(
-      "flex h-screen bg-[#050505] overflow-hidden font-sans relative",
+      "flex h-screen bg-[#0a0a0a] overflow-hidden font-sans relative",
       isFlashing && "selection-flash"
     )}>
       {/* Mesh Background */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(16,185,129,0.08)_0%,transparent_50%)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(16,185,129,0.04)_0%,transparent_50%)] pointer-events-none" />
       
       <main className="flex-1 flex flex-col relative w-full h-full">
         {/* Top bar with Model Selector */}
-        <div className="flex items-center justify-between px-8 py-6 z-50 border-b border-white/5">
-          <h1 className="text-lg font-display font-black tracking-tighter logo-gradient">EscolaIA</h1>
-          
-          <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
-            <button 
-              onClick={() => setModelType('normal')}
-              className={cn(
-                "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
-                modelType === 'normal' ? "bg-white/10 text-white" : "text-slate-500 hover:text-white"
-              )}
-            >
-              Normal
-            </button>
-            <button 
-              onClick={() => setModelType('pro')}
-              className={cn(
-                "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2",
-                modelType === 'pro' ? "bg-emerald-glow text-black shadow-[0_0_15px_rgba(16,185,129,0.3)]" : "text-slate-500 hover:text-white"
-              )}
-            >
-              {modelType === 'pro' && <Sparkles size={10} />}
-              v3.0 Pro
-            </button>
+        <div className="flex items-center justify-between px-8 py-5 z-50 border-b border-white/5 bg-black/20 backdrop-blur-sm">
+          <div className="flex items-center gap-2">
+            <h1 className="text-lg font-display font-black tracking-tighter logo-gradient">EscolaIA</h1>
           </div>
           
-          <button onClick={clearChat} className="p-2 text-slate-500 hover:text-emerald-glow transition-colors">
-            <RotateCcw size={18} />
-          </button>
+          <div className="flex gap-3 items-center">
+            <div className="flex bg-white/5 p-1.5 rounded-lg border border-white/10 gap-1">
+              <button 
+                onClick={() => setModelType('normal')}
+                className={cn(
+                  "px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide transition-all duration-300",
+                  modelType === 'normal' ? "bg-white/15 text-white shadow-md" : "text-slate-400 hover:text-slate-200"
+                )}
+              >
+                Normal
+              </button>
+              <button 
+                onClick={() => setModelType('pro')}
+                className={cn(
+                  "px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide transition-all duration-300 flex items-center gap-1.5",
+                  modelType === 'pro' ? "bg-emerald-glow text-black shadow-[0_0_12px_rgba(16,185,129,0.2)]" : "text-slate-400 hover:text-slate-200"
+                )}
+              >
+                {modelType === 'pro' && <Sparkles size={9} />}
+                Pro
+              </button>
+            </div>
+            <button onClick={clearChat} className="p-2 text-slate-500 hover:text-emerald-glow transition-colors duration-300">
+              <RotateCcw size={18} />
+            </button>
+          </div>
         </div>
 
         {/* Chat Area */}
         <div 
           ref={scrollRef}
-          className="flex-1 overflow-y-auto px-6 md:px-0 space-y-12 no-scrollbar"
+          className="flex-1 overflow-y-auto px-4 sm:px-6 md:px-0 space-y-8 no-scrollbar pb-4"
         >
-          <div className="max-w-[850px] mx-auto py-12">
+          <div className="max-w-[900px] mx-auto w-full py-10 md:py-12">
             {messages.length === 0 ? (
-              <div className="space-y-16 py-20">
+              <div className="space-y-12 py-12 md:py-20">
                 <motion.div
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="space-y-6"
+                  className="space-y-4 px-4 md:px-0"
                 >
-                  <h2 className="text-6xl md:text-7xl font-display font-black text-white tracking-tighter leading-[0.9]">
+                  <h2 className="text-5xl md:text-6xl font-display font-black text-white tracking-tight leading-[1.1]">
                     No que posso te <br />
                     <span className="logo-gradient">ajudar?</span>
                   </h2>
-                  <p className="text-slate-400 text-base max-w-lg font-light">
+                  <p className="text-slate-400 text-sm md:text-base max-w-xl font-light leading-relaxed">
                     A IA mais preparada para você. Acesso ao melhor conhecimento em qualquer momento.
                   </p>
                 </motion.div>
 
-                {/* Bento Cards - Minimalist Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  {/* Calculadora - Grande */}
-                  <motion.div 
-                    whileHover={{ scale: 1.02 }}
+                {/* Bento Grid - Premium Layout */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5 px-4 md:px-0">
+                  {/* Calculadora - Featured */}
+                  <motion.button 
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => setIsCalculatorOpen(true)}
-                    className="md:col-span-1 md:row-span-2 bento-card p-8 flex flex-col justify-between cursor-pointer group h-[300px]"
+                    className="md:col-span-1 md:row-span-2 bento-card p-6 md:p-8 flex flex-col justify-between cursor-pointer group h-auto md:h-[280px] text-left hover:border-emerald-glow/20 transition-all duration-300"
                   >
-                    <div className="w-12 h-12 rounded-2xl bg-emerald-glow/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <Calculator className="text-emerald-glow" size={28} />
+                    <div className="w-10 h-10 rounded-lg bg-emerald-glow/15 flex items-center justify-center mb-auto group-hover:scale-110 transition-transform duration-300">
+                      <Calculator className="text-emerald-glow" size={24} />
                     </div>
                     <div>
-                      <h3 className="text-2xl font-black text-white mb-2">Calculadora</h3>
-                      <p className="text-slate-400 text-sm font-light">Científica e completa</p>
+                      <h3 className="text-lg md:text-xl font-black text-white mb-1.5">Calculadora</h3>
+                      <p className="text-slate-400 text-xs md:text-sm font-light">Científica e completa</p>
                     </div>
-                  </motion.div>
+                  </motion.button>
 
                   {/* Notas */}
-                  <motion.div 
-                    whileHover={{ scale: 1.02 }}
+                  <motion.button 
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => setIsNotesOpen(true)}
-                    className="bento-card p-8 flex flex-col justify-between cursor-pointer group"
+                    className="bento-card p-6 md:p-8 flex flex-col justify-between cursor-pointer group text-left hover:border-blue-400/20 transition-all duration-300"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center group-hover:rotate-12 transition-transform">
+                    <div className="w-10 h-10 rounded-lg bg-blue-500/15 flex items-center justify-center mb-auto group-hover:scale-110 transition-transform duration-300">
                       <StickyNote className="text-blue-400" size={22} />
                     </div>
                     <div>
-                      <h3 className="text-lg font-black text-white">Notas</h3>
+                      <h3 className="text-lg font-black text-white mb-1">Notas</h3>
                       <p className="text-slate-400 text-xs font-light">Rápidas e offline</p>
                     </div>
-                  </motion.div>
+                  </motion.button>
 
                   {/* Conversor */}
-                  <motion.div 
-                    whileHover={{ scale: 1.02 }}
-                    className="bento-card p-8 flex flex-col justify-between cursor-pointer group"
+                  <motion.button 
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="bento-card p-6 md:p-8 flex flex-col justify-between cursor-pointer group text-left hover:border-purple-400/20 transition-all duration-300"
                     onClick={() => setIsConverterOpen(true)}
                   >
-                    <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <div className="w-10 h-10 rounded-lg bg-purple-500/15 flex items-center justify-center mb-auto group-hover:scale-110 transition-transform duration-300">
                       <ArrowRightLeft className="text-purple-400" size={22} />
                     </div>
                     <div>
-                      <h3 className="text-lg font-black text-white">Conversor</h3>
+                      <h3 className="text-lg font-black text-white mb-1">Conversor</h3>
                       <p className="text-slate-400 text-xs font-light">Unidades e medidas</p>
                     </div>
-                  </motion.div>
+                  </motion.button>
                 </div>
               </div>
             ) : (
-              <div className="space-y-8">
+              <div className="space-y-6 px-4 md:px-0">
                 <AnimatePresence mode="popLayout">
                   {messages.map((m) => (
                     <motion.div
@@ -387,14 +393,14 @@ export default function App() {
                       )}
                     >
                       <div className={cn(
-                        "max-w-[90%] space-y-3",
+                        "max-w-[85%] md:max-w-[75%] space-y-2.5",
                         m.role === 'user' ? "text-right" : "text-left"
                       )}>
                         <div className={cn(
-                          "p-6 rounded-3xl transition-all duration-500",
+                          "p-4 md:p-5 rounded-[20px] transition-all duration-300",
                           m.role === 'user' 
-                            ? "bg-emerald-glow/10 border border-emerald-glow/20 text-white font-medium" 
-                            : "bg-transparent text-slate-300 font-light text-lg leading-relaxed",
+                            ? "bg-emerald-glow/12 border border-emerald-glow/20 text-white font-medium" 
+                            : "bg-transparent text-slate-300 font-light text-base leading-[1.6]",
                           isLoading && messages[messages.length - 1].id === m.id && "opacity-50"
                         )}>
                           <div className="markdown-body">
@@ -403,7 +409,7 @@ export default function App() {
                         </div>
                         {m.role === 'model' && (
                           <div className="flex gap-4 px-2">
-                            <button onClick={() => copyToClipboard(m)} className="text-[10px] font-black uppercase text-slate-600 hover:text-emerald-glow transition-colors tracking-[0.2em]">
+                            <button onClick={() => copyToClipboard(m)} className="text-[10px] font-bold uppercase text-slate-600 hover:text-emerald-glow transition-colors duration-300 tracking-wide">
                               {copiedId === m.id ? 'Copiado' : 'Copiar'}
                             </button>
                           </div>
@@ -413,10 +419,10 @@ export default function App() {
                   ))}
                 </AnimatePresence>
                 {isLoading && (
-                  <div className="flex gap-2 p-6">
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-glow animate-bounce" />
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-glow animate-bounce delay-100" />
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-glow animate-bounce delay-200" />
+                  <div className="flex gap-1.5 p-4">
+                    <div className="w-2 h-2 rounded-full bg-emerald-glow animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <div className="w-2 h-2 rounded-full bg-emerald-glow animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <div className="w-2 h-2 rounded-full bg-emerald-glow animate-bounce" style={{ animationDelay: '300ms' }} />
                   </div>
                 )}
               </div>
@@ -424,28 +430,30 @@ export default function App() {
           </div>
         </div>
 
-        {/* Floating Input Bar */}
-        <div className="w-full max-w-[850px] mx-auto px-8 py-8 relative">
-          <div className="relative group">
-            <div className="ios-input-container p-3 flex items-center gap-3 group-focus-within:border-emerald-glow/40 transition-all duration-700">
-              <input 
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                placeholder="Pergunte qualquer coisa..."
-                className="flex-1 bg-transparent border-none focus:ring-0 text-white text-base placeholder:text-slate-500"
-              />
-              <button 
-                onClick={() => handleSend()}
-                disabled={!input.trim() || isLoading}
-                className={cn(
-                  "p-3 rounded-full transition-all duration-500",
-                  input.trim() ? "bg-emerald-glow text-black scale-100 shadow-[0_0_20px_rgba(16,185,129,0.3)]" : "text-slate-700 scale-90"
-                )}
-              >
-                <Send size={20} className="rotate-[-10deg] group-hover:rotate-0 transition-transform" />
-              </button>
+        {/* Input Bar - Fixed Bottom */}
+        <div className="w-full bg-black/30 backdrop-blur-sm border-t border-white/5 sticky bottom-0">
+          <div className="max-w-[900px] mx-auto px-4 sm:px-6 md:px-8 py-4">
+            <div className="relative group">
+              <div className="ios-input-container p-3.5 flex items-center gap-3 group-focus-within:border-emerald-glow/30 group-focus-within:shadow-[0_0_20px_rgba(16,185,129,0.08)] transition-all duration-300">
+                <input 
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                  placeholder="Pergunte qualquer coisa..."
+                  className="flex-1 bg-transparent border-none focus:ring-0 text-white text-sm md:text-base placeholder:text-slate-500 outline-none"
+                />
+                <button 
+                  onClick={() => handleSend()}
+                  disabled={!input.trim() || isLoading}
+                  className={cn(
+                    "p-2.5 md:p-3 rounded-full transition-all duration-300",
+                    input.trim() ? "bg-emerald-glow text-black scale-100 shadow-[0_0_16px_rgba(16,185,129,0.25)] hover:shadow-[0_0_24px_rgba(16,185,129,0.35)]" : "text-slate-700 scale-90 cursor-not-allowed"
+                  )}
+                >
+                  <Send size={18} className="rotate-[-10deg] group-hover:rotate-0 transition-transform duration-300" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
