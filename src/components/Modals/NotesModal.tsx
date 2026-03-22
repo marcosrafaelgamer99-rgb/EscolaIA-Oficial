@@ -1,6 +1,12 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { StickyNote, X } from 'lucide-react';
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 
 interface NotesModalProps {
   isOpen: boolean;
@@ -17,7 +23,7 @@ export default function NotesModal({ isOpen, onClose, quickNotes, setQuickNotes 
           initial={{ opacity: 0, x: 20, scale: 0.95 }}
           animate={{ opacity: 1, x: 0, scale: 1 }}
           exit={{ opacity: 0, x: 20, scale: 0.95 }}
-          className="absolute top-48 md:top-40 right-4 md:right-[5.5rem] z-50 w-72 glass-panel rounded-2xl overflow-hidden shadow-[0_10px_40px_rgba(0,0,0,0.5)] border border-white/10"
+          className="absolute top-48 md:top-40 right-4 md:right-[5.5rem] z-50 w-72 elite-glass rounded-[24px] overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.4)] border border-white/5"
         >
           <div className="p-3 bg-white/5 border-b border-white/5 flex items-center justify-between">
             <span className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
@@ -27,12 +33,12 @@ export default function NotesModal({ isOpen, onClose, quickNotes, setQuickNotes 
               <X size={14} />
             </button>
           </div>
-          <div className="p-3 bg-bg-deep/90 backdrop-blur-xl">
+          <div className="p-3 bg-[#0a0a0a]/90 backdrop-blur-sm">
             <textarea
               value={quickNotes}
               onChange={(e) => setQuickNotes(e.target.value)}
               placeholder="Suas anotações rápidas da aula aqui..."
-              className="w-full h-40 bg-black/40 text-base text-slate-300 placeholder:text-slate-600 border border-white/5 rounded-xl p-3 resize-none focus:outline-none focus:border-indigo-500/50 transition-colors pb-safe"
+              className="w-full h-40 bg-black/40 text-base text-slate-300 placeholder:text-slate-600 border border-white/5 rounded-xl p-3 resize-none focus:outline-none focus:border-indigo-500/50 transition-colors"
             />
           </div>
         </motion.div>
