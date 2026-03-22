@@ -233,7 +233,7 @@ export default function App() {
           className="w-full max-w-sm bento-card p-10 text-center"
         >
           <div className="space-y-6">
-            <h1 className="text-4xl font-display font-black tracking-tighter logo-gradient">EscolaIA</h1>
+            <h1 className="text-4xl font-display font-black tracking-tighter logo-gradient">EscolaIA v3.0 Pro</h1>
             <p className="text-slate-500 text-[10px] uppercase tracking-[0.4em] font-black">Acesso Premium</p>
             
             <form onSubmit={handleAuth} className="space-y-6">
@@ -270,7 +270,7 @@ export default function App() {
         {/* Top bar with Model Selector */}
         <div className="flex items-center justify-between px-8 py-5 z-50 border-b border-white/5 bg-black/20 backdrop-blur-sm">
           <div className="flex items-center gap-2">
-            <h1 className="text-lg font-display font-black tracking-tighter logo-gradient">EscolaIA</h1>
+            <h1 className="text-lg font-display font-black tracking-tighter logo-gradient">EscolaIA v3.0 Pro</h1>
           </div>
           
           <div className="flex gap-3 items-center">
@@ -306,7 +306,7 @@ export default function App() {
           ref={scrollRef}
           className="flex-1 overflow-y-auto px-4 sm:px-6 md:px-0 space-y-8 no-scrollbar pb-4"
         >
-          <div className="max-w-[900px] mx-auto w-full py-10 md:py-12">
+          <div className="max-w-[850px] mx-auto w-full py-10 md:py-12">
             {messages.length === 0 ? (
               <div className="space-y-12 py-12 md:py-20">
                 <motion.div
@@ -427,7 +427,7 @@ export default function App() {
 
         {/* Input Bar - Fixed Bottom */}
         <div className="w-full bg-black/30 backdrop-blur-sm border-t border-white/5 sticky bottom-0">
-          <div className="max-w-[900px] mx-auto px-4 sm:px-6 md:px-8 py-4">
+          <div className="max-w-[850px] mx-auto px-4 sm:px-6 md:px-8 py-4">
             <div className="relative group">
               <div className="ios-input-container p-3.5 flex items-center gap-3 group-focus-within:border-emerald-glow/30 group-focus-within:shadow-[0_0_20px_rgba(16,185,129,0.08)] transition-all duration-300">
                 <input 

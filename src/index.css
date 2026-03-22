@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -6,48 +5,58 @@
   --font-display: "Poppins", sans-serif;
   
   --color-bg-deep: #0a0a0a;
-  --color-bg-charcoal: #0f0f0f;
   --color-emerald-glow: #10b981;
-  --color-emerald-dark: #064e3b;
-  --color-glass: rgba(255, 255, 255, 0.05);
-  --color-glass-border: rgba(16, 185, 129, 0.06);
+}
+
+:root {
+  --glass: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(16, 185, 129, 0.1);
 }
 
 @layer base {
   body {
     @apply bg-bg-deep text-slate-200 font-sans antialiased;
     overscroll-behavior: none;
-    overflow-x: hidden;
     line-height: 1.6;
   }
-  
-  h1, h2, h3, h4 {
-    @apply font-display font-bold tracking-tight text-white;
-  }
-
-  ::selection {
-    @apply bg-emerald-500/30 text-white;
-  }
 }
 
-/* Premium Glassmorphism Effect */
-.elite-glass {
-  background: var(--color-glass);
-  backdrop-filter: blur(15px) saturate(180%);
-  -webkit-backdrop-filter: blur(15px) saturate(180%);
-  border: 1px solid var(--color-glass-border);
-  box-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.4);
-}
-
-/* Bento Card with Premium styling */
 .bento-card {
-  @apply elite-glass rounded-[24px] transition-all duration-500 relative overflow-hidden;
+  background: var(--glass);
+  backdrop-filter: blur(20px);
+  @apply rounded-[28px] border border-white/5 transition-all duration-500 overflow-hidden;
 }
 
 .bento-card:hover {
-  @apply border-emerald-500/15;
+  border-color: rgba(16, 185, 129, 0.3);
   transform: translateY(-2px);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4), 0 0 24px rgba(16, 185, 129, 0.03);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5), 0 0 32px rgba(16, 185, 129, 0.05);
+}
+
+.ios-input-container {
+  background: rgba(10, 10, 10, 0.8);
+  backdrop-filter: blur(20px);
+  @apply rounded-[28px] border border-white/5 transition-all duration-300;
+}
+
+.ios-input-container:focus-within {
+  border-color: rgba(16, 185, 129, 0.3);
+  box-shadow: 0 12px 48px rgba(16, 185, 129, 0.12);
+}
+
+.logo-gradient {
+  background: linear-gradient(135deg, #ffffff 0%, #10b981 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.markdown-body {
+  @apply space-y-4;
+}
+
+.markdown-body p {
+  @apply text-slate-300;
 }
 
 /* Pro Glow Effect */
@@ -77,53 +86,6 @@
   100% { background-position: 0% 50%; }
 }
 
-/* Input Bar Styling */
-.ios-input-bar {
-  @apply elite-glass rounded-full px-6 py-4 flex items-center gap-4 w-full border-white/10;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-}
-
-.ios-input-container {
-  @apply elite-glass rounded-[24px] border border-white/5;
-  transition: all 0.3s ease;
-}
-
-.ios-input-container:focus-within {
-  @apply border-emerald-glow/20;
-  box-shadow: 0 12px 48px rgba(16, 185, 129, 0.1);
-}
-
-/* Logo Gradient */
-.logo-gradient {
-  background: linear-gradient(135deg, #ffffff 0%, #10b981 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* Animations */
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-
-@utility no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-  &::-webkit-scrollbar {
-    display: none;
-  }
-}
-
-.markdown-body {
-  @apply space-y-4;
-  line-height: 1.6;
-}
-
-.markdown-body p {
-  @apply text-slate-300;
-}
-
 .markdown-body strong {
   @apply text-white font-bold;
 }
@@ -131,5 +93,3 @@
 .markdown-body code {
   @apply bg-black/40 px-1.5 py-0.5 rounded text-emerald-400 font-mono text-sm border border-white/5;
 }
-
-
