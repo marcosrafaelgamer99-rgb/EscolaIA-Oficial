@@ -772,7 +772,7 @@ export default function App() {
 
       <div className="mt-auto pt-8">
         <p className="text-[10px] text-slate-300 font-medium tracking-wide">
-          VERSÃO PRO 2.0
+          EscolaIA v3.0
         </p>
       </div>
     </div>
@@ -1221,7 +1221,7 @@ export default function App() {
             </div>
             {!isFocusMode && (
               <p className="text-center mt-6 text-[10px] text-slate-500 font-medium tracking-widest uppercase transition-opacity duration-300">
-                EscolaIA v3.0 - Em Desenvolvimento | Marcos Rafael (8º B)
+                © 2026 EscolaIA | v3.0
               </p>
             )}
           </div>
