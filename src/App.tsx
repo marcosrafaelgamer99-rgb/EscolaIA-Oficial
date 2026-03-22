@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, lazy, Suspense } from 'react';
-import { Send, User, Bot, Loader2, Sparkles, BookOpen, Calculator, History, Globe, FlaskConical, Languages, ShieldCheck, UserCheck, Image as ImageIcon, X, FileSearch, Menu, Search, ExternalLink, Copy, Check, Key, LogOut, Timer, Play, Pause, RotateCcw, FileText, GraduationCap, StickyNote, ArrowRightLeft, Lightbulb, ImagePlus, Focus } from 'lucide-react';
+import { Send, User, Bot, Loader2, Sparkles, BookOpen, Calculator, History, Globe, FlaskConical, Languages, ShieldCheck, UserCheck, Image as ImageIcon, X, FileSearch, Menu, Search, ExternalLink, Copy, Check, Key, LogOut, Timer, Play, Pause, RotateCcw, FileText, GraduationCap, StickyNote, ArrowRightLeft, Lightbulb, Focus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import ReactMarkdown from 'react-markdown';
 import { chatWithAI } from './services/gemini';
@@ -10,7 +10,6 @@ import { twMerge } from 'tailwind-merge';
 const CalculatorModal = lazy(() => import('./components/Modals/CalculatorModal'));
 const NotesModal = lazy(() => import('./components/Modals/NotesModal'));
 const ConverterModal = lazy(() => import('./components/Modals/ConverterModal'));
-const ImageGeneratorModal = lazy(() => import('./components/Modals/ImageGeneratorModal'));
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -146,9 +145,14 @@ export default function App() {
   const [convValue, setConvValue] = useState('');
   const [convType, setConvType] = useState('m_cm');
   const [convResult, setConvResult] = useState('');
-  const [isImageGeneratorOpen, setIsImageGeneratorOpen] = useState(false);
-  const [imagePrompt, setImagePrompt] = useState('');
   const [isFocusMode, setIsFocusMode] = useState(false);
+  const [modelType, setModelType] = useState<'normal' | 'pro'>(() => {
+    return (localStorage.getItem('escolaia_model_type') as 'normal' | 'pro') || 'pro';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('escolaia_model_type', modelType);
+  }, [modelType]);
 
   useEffect(() => {
     localStorage.setItem('escolaia_quick_notes', quickNotes);
@@ -346,31 +350,30 @@ export default function App() {
       const useSearch = finalPrompt.includes('MODO PESQUISA ATIVADO');
       const isStudyMode = finalPrompt.includes('MODO ESTUDAR ATIVADO');
       
-      const result = await chatWithAI(
+      const response = await chatWithAI(
         finalPrompt, 
         history, 
         currentImage || undefined, 
         useSearch, 
-        schoolYear,
+        schoolYear, 
         isStudyMode ? { intensity: studyIntensity, depth: studyDepth } : undefined,
-        customApiKey.trim()
+        customApiKey.trim(),
+        modelType
       );
       
-      let finalContent = result.text || 'Desculpe, tive um problema ao processar sua resposta.';
+      let finalContent = response.text || 'Desculpe, tive um problema ao processar sua resposta.';
       
       // If it's a fallback (search failed), add a subtle notice
-      if (result.isFallback) {
-        finalContent = `⚠️ **Nota:** O limite de pesquisa em tempo real foi atingido. Esta resposta foi gerada com base no meu conhecimento interno atualizado.\n\n---\n\n${finalContent}`;
+      if (response.isFallback) {
+        finalContent += '\n\n*(Nota: O limite de pesquisa em tempo real foi atingido. Esta resposta foi gerada com base no meu conhecimento interno.)*';
       }
 
-      const aiMessage: Message = {
+      setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'model',
         content: finalContent,
-        sources: result.sources
-      };
-
-      setMessages(prev => [...prev, aiMessage]);
+        sources: response.sources
+      }]);
       
       // Trigger success animation for image analysis
       if (currentImage) {
@@ -539,6 +542,48 @@ export default function App() {
         </button>
       </div>
 
+      {/* Model Selector - Refined Tabs */}
+      <div className="mb-10 px-1">
+        <label className="text-[10px] text-slate-500 uppercase font-bold tracking-[0.2em] mb-4 block text-center">Motor de Inteligência</label>
+        <div className="flex p-1.5 bg-black/40 border border-white/5 rounded-2xl backdrop-blur-md relative">
+          {/* Slider Background */}
+          <motion.div 
+            layoutId="modelSlider"
+            className="absolute inset-y-1.5 rounded-xl bg-white/5 border border-white/10 shadow-lg z-0"
+            animate={{ 
+              left: modelType === 'normal' ? '6px' : '50%',
+              width: 'calc(50% - 6px)'
+            }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          />
+
+          <button
+            onClick={() => setModelType('normal')}
+            className={cn(
+              "flex-1 flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl text-[10px] transition-all duration-500 z-10 relative",
+              modelType === 'normal' ? "text-white font-black" : "text-slate-500 hover:text-slate-300"
+            )}
+          >
+            <Bot size={14} className={cn("transition-transform duration-500", modelType === 'normal' ? "scale-110" : "opacity-50")} />
+            <span className="uppercase tracking-tighter">Normal</span>
+          </button>
+
+          <button
+            onClick={() => setModelType('pro')}
+            className={cn(
+              "flex-1 flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl text-[10px] transition-all duration-500 z-10 relative overflow-hidden group",
+              modelType === 'pro' ? "text-indigo-glow font-black" : "text-slate-500 hover:text-slate-300"
+            )}
+          >
+            <Sparkles size={14} className={cn("transition-all duration-500", modelType === 'pro' ? "text-amber-400 scale-110 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]" : "opacity-50")} />
+            <span className="uppercase tracking-tighter">v3.0 Pro</span>
+            {modelType === 'pro' && (
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-indigo-500/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite] pointer-events-none" />
+            )}
+          </button>
+        </div>
+      </div>
+
       <div className="space-y-10 flex-1 overflow-y-auto pr-2 no-scrollbar">
         {/* Pomodoro Timer */}
         <div className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur-md">
@@ -569,6 +614,19 @@ export default function App() {
               {isPomodoroActive ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" className="ml-1" />}
             </button>
           </div>
+        </div>
+        
+        {/* Quick Notes in Sidebar - Integrated for layout balance */}
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur-md">
+          <h2 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+            <StickyNote size={12} /> Anotações Rápidas
+          </h2>
+          <textarea
+            value={quickNotes}
+            onChange={(e) => setQuickNotes(e.target.value)}
+            placeholder="Anote algo importante aqui..."
+            className="w-full h-32 bg-black/40 border border-white/5 rounded-xl p-3 text-xs text-slate-300 outline-none focus:border-emerald-glow/30 transition-all resize-none no-scrollbar font-sans leading-relaxed"
+          />
         </div>
 
         <div>
@@ -848,6 +906,7 @@ export default function App() {
             title="Modo Foco"
           >
             <Focus size={20} />
+            <span className="absolute -top-1 -right-1 bg-indigo-500 text-[8px] font-black px-1.5 py-0.5 rounded-full text-white shadow-lg border border-white/20">PRO</span>
           </button>
 
           <button 
@@ -888,19 +947,6 @@ export default function App() {
           >
             <ArrowRightLeft size={20} />
           </button>
-
-          <button 
-            onClick={() => setIsImageGeneratorOpen(!isImageGeneratorOpen)}
-            className={cn(
-              "p-3 rounded-full backdrop-blur-md shadow-lg transition-all active:scale-95 min-w-[44px] min-h-[44px] flex items-center justify-center",
-              isImageGeneratorOpen 
-                ? "bg-blue-500 text-white" 
-                : "bg-white/5 border border-white/10 text-slate-400 hover:text-blue-400 hover:bg-white/10"
-            )}
-            title="Gerador de Imagens Educacionais"
-          >
-            <ImagePlus size={20} />
-          </button>
         </div>
 
         <Suspense fallback={<div className="hidden">Loading...</div>}>
@@ -925,13 +971,6 @@ export default function App() {
             setConvValue={setConvValue} 
             convResult={convResult} 
             handleConvert={handleConvert} 
-          />
-          <ImageGeneratorModal 
-            isOpen={isImageGeneratorOpen} 
-            onClose={() => setIsImageGeneratorOpen(false)} 
-            imagePrompt={imagePrompt} 
-            setImagePrompt={setImagePrompt} 
-            handleSend={handleSend} 
           />
         </Suspense>
 
@@ -1163,6 +1202,19 @@ export default function App() {
         {/* Input Area */}
         <div className="p-4 md:p-8 sticky bottom-0 z-40 bg-bg-deep/90 backdrop-blur-xl border-t border-white/5 md:border-transparent md:bg-transparent md:backdrop-blur-none pb-safe">
           <div className="max-w-4xl mx-auto relative">
+            {modelType === 'pro' && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center justify-center gap-2 mb-4"
+              >
+                <div className="px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center gap-2">
+                  <Sparkles size={10} className="text-amber-400" />
+                  <span className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest">Você está usando o modelo de alta performance</span>
+                </div>
+              </motion.div>
+            )}
+
             {selectedImage && (
               <motion.div 
                 initial={{ opacity: 0, y: 10 }}

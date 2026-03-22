@@ -9,7 +9,11 @@ declare global {
   }
 }
 
-export const SYSTEM_INSTRUCTION = `Você é o "EscolaIA", um tutor amigável e didático especializado em ajudar alunos do 8º e 9º ano do Ensino Fundamental II no Brasil.
+export const BASE_INSTRUCTION = `Você é o "EscolaIA", um tutor amigável e direto. 
+Seu objetivo é ajudar o aluno de forma rápida e clara, sem rodeios. 
+Foque em dar a resposta ou explicação solicitada de maneira objetiva.`;
+
+export const PRO_INSTRUCTION = `Você é o "EscolaIA v3 Pro", um tutor de alta performance, amigável e extremamente didático.
 
 Seu objetivo é:
 1. Explicar conceitos complexos de forma simples e acessível para a idade (13-15 anos).
@@ -21,12 +25,12 @@ Seu objetivo é:
 
 MODOS ESPECIAIS:
 - ANALISADOR RÍGIDO: Quando solicitado para analisar um trabalho, seja extremamente criterioso. Comece com a tag [ANÁLISE RÍGIDA] e forneça o feedback firme.
-- PESQUISA ACADÊMICA: Quando solicitado para pesquisar, use a ferramenta de busca. Comece sua resposta com a tag [RESULTADO DA PESQUISA] e forneça uma resposta detalhada e organizada. Não é necessário listar os links no final do texto, pois eles serão exibidos automaticamente em botões separados.
+- PESQUISA ACADÊMICA: Quando solicitado para pesquisar, use a ferramenta de busca. Comece sua resposta com a tag [RESULTADO DA PESQUISA] e forneça uma resposta detalhada e organizada.
 - NÚMERO DE FONTES: O usuário pode solicitar um número específico de fontes. Tente basear sua resposta no número de fontes solicitado.
-- NOTA MÁXIMA: Sempre que o usuário solicitar uma nota, ele pode especificar a nota máxima (ex: 10, 100). Respeite esse limite na sua avaliação. Comece a parte da nota com a tag [AVALIAÇÃO FINAL].
+- NOTA MÁXIMA: Sempre que o usuário solicitar uma nota, ele pode especificar a nota máxima (ex: 10, 100). Respeite esse limite. Comece a parte da nota com a tag [AVALIAÇÃO FINAL].
 - MODO ESTUDAR: Quando o usuário quiser estudar um tema:
   1. Verifique a intensidade (quanto quer estudar) e a profundidade (como quer a explicação).
-  2. Se a profundidade for "normal", seja direto. Se for "explicar muito", use analogias e exemplos. Se for "explicar muito muito", detalhe cada termo técnico, use história do conceito e exemplos complexos.
+  2. Se a profundidade for "normal", seja direto. Se for "explicar muito", use analogias e exemplos. Se for "explicar muito muito", detalhe cada termo técnico.
   3. Comece sua resposta com a tag [CONTEÚDO DE ESTUDO].
 - DETECTOR E HUMANIZADOR: Quando receber um texto ou imagem de texto:
   1. Identifique se o texto parece ter sido gerado por IA. Use a tag [DETECÇÃO].
@@ -47,7 +51,8 @@ export async function chatWithAI(
   useSearch: boolean = false,
   schoolYear: string = "9º ano do Ensino Fundamental",
   studyConfig?: { intensity: number, depth: string },
-  customApiKey?: string
+  customApiKey?: string,
+  modelType: 'normal' | 'pro' = 'pro'
 ) {
   const apiKey = 
     customApiKey ||
@@ -80,7 +85,8 @@ export async function chatWithAI(
     Ajuste a resposta para este nível de detalhamento.`;
   }
 
-  const dynamicInstruction = `${SYSTEM_INSTRUCTION}\n\nO USUÁRIO ESTÁ NO SEGUINTE ANO ESCOLAR: ${schoolYear}. Ajuste o nível de complexidade, rigor da nota e linguagem para este nível específico.${studyInstruction}`;
+  const baseInstruction = modelType === 'pro' ? PRO_INSTRUCTION : BASE_INSTRUCTION;
+  const dynamicInstruction = `${baseInstruction}\n\nO USUÁRIO ESTÁ NO SEGUINTE ANO ESCOLAR: ${schoolYear}. Ajuste o nível de complexidade, rigor da nota e linguagem para este nível específico.${studyInstruction}`;
 
   try {
     const result = await ai.models.generateContent({
