@@ -230,7 +230,7 @@ export default function App() {
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-sm bento-card p-10 text-center"
+          className="w-full max-w-sm cristal-fume p-12 text-center rounded-[28px]"
         >
           <div className="space-y-6">
             <h1 className="text-4xl font-display font-black tracking-tighter logo-gradient">EscolaIA v3.0 Pro</h1>
@@ -291,12 +291,12 @@ export default function App() {
                   modelType === 'pro' ? "bg-emerald-glow text-black shadow-[0_0_12px_rgba(16,185,129,0.2)]" : "text-slate-400 hover:text-slate-200"
                 )}
               >
-                {modelType === 'pro' && <Sparkles size={9} />}
+                {modelType === 'pro' && <Sparkles size={11} />}
                 Pro
               </button>
             </div>
             <button onClick={clearChat} className="p-2 text-slate-500 hover:text-emerald-glow transition-colors duration-300">
-              <RotateCcw size={18} />
+              <RotateCcw size={16} />
             </button>
           </div>
         </div>
@@ -330,14 +330,14 @@ export default function App() {
                     whileHover={{ scale: 1.02, y: -2 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setIsCalculatorOpen(true)}
-                    className="md:col-span-1 md:row-span-2 bento-card p-6 md:p-8 flex flex-col justify-between cursor-pointer group h-auto md:h-[280px] text-left hover:border-emerald-glow/20 transition-all duration-300"
+                    className="md:col-span-1 md:row-span-2 bento-card p-10 md:p-12 flex flex-col justify-between cursor-pointer group h-auto md:h-[320px] text-left"
                   >
-                    <div className="w-10 h-10 rounded-lg bg-emerald-glow/15 flex items-center justify-center mb-auto group-hover:scale-110 transition-transform duration-300">
-                      <Calculator className="text-emerald-glow" size={24} />
+                    <div className="w-10 h-10 rounded-lg bg-emerald-glow/10 flex items-center justify-center mb-auto group-hover:scale-110 transition-transform duration-500">
+                      <Calculator className="text-emerald-glow/80" size={20} />
                     </div>
                     <div>
-                      <h3 className="text-lg md:text-xl font-black text-white mb-1.5">Calculadora</h3>
-                      <p className="text-slate-400 text-xs md:text-sm font-light">Científica e completa</p>
+                      <h3 className="text-xl md:text-2xl font-black text-white mb-2">Calculadora</h3>
+                      <p className="text-slate-500 text-xs md:text-sm font-light">Científica e completa</p>
                     </div>
                   </motion.button>
 
@@ -346,14 +346,14 @@ export default function App() {
                     whileHover={{ scale: 1.02, y: -2 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setIsNotesOpen(true)}
-                    className="bento-card p-6 md:p-8 flex flex-col justify-between cursor-pointer group text-left hover:border-blue-400/20 transition-all duration-300"
+                    className="bento-card p-10 md:p-12 flex flex-col justify-between cursor-pointer group text-left"
                   >
-                    <div className="w-10 h-10 rounded-lg bg-blue-500/15 flex items-center justify-center mb-auto group-hover:scale-110 transition-transform duration-300">
-                      <StickyNote className="text-blue-400" size={22} />
+                    <div className="w-10 h-10 rounded-lg bg-slate-500/10 flex items-center justify-center mb-auto group-hover:scale-110 transition-transform duration-500">
+                      <StickyNote className="text-slate-400" size={20} />
                     </div>
                     <div>
-                      <h3 className="text-lg font-black text-white mb-1">Notas</h3>
-                      <p className="text-slate-400 text-xs font-light">Rápidas e offline</p>
+                      <h3 className="text-xl font-black text-white mb-2">Notas</h3>
+                      <p className="text-slate-500 text-xs font-light">Rápidas e offline</p>
                     </div>
                   </motion.button>
 
@@ -361,15 +361,15 @@ export default function App() {
                   <motion.button 
                     whileHover={{ scale: 1.02, y: -2 }}
                     whileTap={{ scale: 0.98 }}
-                    className="bento-card p-6 md:p-8 flex flex-col justify-between cursor-pointer group text-left hover:border-purple-400/20 transition-all duration-300"
+                    className="bento-card p-10 md:p-12 flex flex-col justify-between cursor-pointer group text-left"
                     onClick={() => setIsConverterOpen(true)}
                   >
-                    <div className="w-10 h-10 rounded-lg bg-purple-500/15 flex items-center justify-center mb-auto group-hover:scale-110 transition-transform duration-300">
-                      <ArrowRightLeft className="text-purple-400" size={22} />
+                    <div className="w-10 h-10 rounded-lg bg-slate-500/10 flex items-center justify-center mb-auto group-hover:scale-110 transition-transform duration-500">
+                      <ArrowRightLeft className="text-slate-400" size={20} />
                     </div>
                     <div>
-                      <h3 className="text-lg font-black text-white mb-1">Conversor</h3>
-                      <p className="text-slate-400 text-xs font-light">Unidades e medidas</p>
+                      <h3 className="text-xl font-black text-white mb-2">Conversor</h3>
+                      <p className="text-slate-500 text-xs font-light">Unidades e medidas</p>
                     </div>
                   </motion.button>
                 </div>
@@ -392,10 +392,10 @@ export default function App() {
                         m.role === 'user' ? "text-right" : "text-left"
                       )}>
                         <div className={cn(
-                          "p-4 md:p-5 rounded-[20px] transition-all duration-300",
+                          "p-6 md:p-8 rounded-[28px] transition-all duration-500",
                           m.role === 'user' 
-                            ? "bg-emerald-glow/12 border border-emerald-glow/20 text-white font-medium" 
-                            : "bg-transparent text-slate-300 font-light text-base leading-[1.6]",
+                            ? "bg-white/5 border border-white/10 text-white font-medium" 
+                            : "cristal-fume text-slate-300 font-light text-base leading-[1.7]",
                           isLoading && messages[messages.length - 1].id === m.id && "opacity-50"
                         )}>
                           <div className="markdown-body">
@@ -425,28 +425,28 @@ export default function App() {
           </div>
         </div>
 
-        {/* Input Bar - Fixed Bottom */}
-        <div className="w-full bg-black/30 backdrop-blur-sm border-t border-white/5 sticky bottom-0">
-          <div className="max-w-[850px] mx-auto px-4 sm:px-6 md:px-8 py-4">
+        {/* Input Bar - Floating Pill */}
+        <div className="w-full fixed bottom-8 left-0 right-0 z-50 pointer-events-none">
+          <div className="max-w-[850px] mx-auto px-6 pointer-events-auto">
             <div className="relative group">
-              <div className="ios-input-container p-3.5 flex items-center gap-3 group-focus-within:border-emerald-glow/30 group-focus-within:shadow-[0_0_20px_rgba(16,185,129,0.08)] transition-all duration-300">
+              <div className="floating-pill p-1.5 group-focus-within:bg-white/[0.05]">
                 <input 
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                   placeholder="Pergunte qualquer coisa..."
-                  className="flex-1 bg-transparent border-none focus:ring-0 text-white text-sm md:text-base placeholder:text-slate-500 outline-none"
+                  className="flex-1 bg-transparent border-none focus:ring-0 text-white text-sm md:text-base placeholder:text-slate-500 outline-none px-4"
                 />
                 <button 
                   onClick={() => handleSend()}
                   disabled={!input.trim() || isLoading}
                   className={cn(
-                    "p-2.5 md:p-3 rounded-full transition-all duration-300",
-                    input.trim() ? "bg-emerald-glow text-black scale-100 shadow-[0_0_16px_rgba(16,185,129,0.25)] hover:shadow-[0_0_24px_rgba(16,185,129,0.35)]" : "text-slate-700 scale-90 cursor-not-allowed"
+                    "p-4 rounded-full transition-all duration-500",
+                    input.trim() ? "bg-emerald-glow text-black scale-100 shadow-[0_0_24px_rgba(16,185,129,0.3)] hover:scale-105" : "text-slate-600 scale-90 cursor-not-allowed"
                   )}
                 >
-                  <Send size={18} className="rotate-[-10deg] group-hover:rotate-0 transition-transform duration-300" />
+                  <Send size={16} className="rotate-[-10deg] group-hover:rotate-0 transition-transform duration-500" />
                 </button>
               </div>
             </div>

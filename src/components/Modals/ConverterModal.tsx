@@ -30,17 +30,17 @@ export default function ConverterModal({
           initial={{ opacity: 0, y: -20, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -20, scale: 0.95 }}
-          className="absolute top-64 md:top-56 right-4 md:right-[5.5rem] z-50 w-64 elite-glass rounded-[24px] overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.4)] border border-white/5"
+          className="absolute top-64 md:top-56 right-4 md:right-[5.5rem] z-50 w-72 cristal-fume rounded-[28px] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
         >
           <div className="p-3 bg-white/5 border-b border-white/5 flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-              <ArrowRightLeft size={14} className="text-purple-400" /> Conversor
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+              <ArrowRightLeft size={14} className="text-slate-500" /> Conversor
             </span>
             <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors active:scale-95 min-w-[44px] min-h-[44px] flex items-center justify-center">
               <X size={14} />
             </button>
           </div>
-          <div className="p-4 bg-[#0a0a0a]/90 backdrop-blur-sm space-y-3">
+          <div className="p-6 bg-black space-y-3">
             <select 
               value={convType} 
               onChange={(e) => { setConvType(e.target.value); setConvResult(''); }}
@@ -51,7 +51,7 @@ export default function ConverterModal({
               <option value="km_m">Km → Metros (m)</option>
               <option value="c_f">Celsius → Fahrenheit</option>
               <option value="f_c">Fahrenheit → Celsius</option>
-              <option value="kg_g">Kg → Gramas (g)</option>
+                <option value="kg_g">Kg → Gramas (g)</option>
             </select>
             <input 
               type="number" 
