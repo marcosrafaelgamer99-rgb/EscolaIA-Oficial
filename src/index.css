@@ -5,12 +5,12 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Poppins", sans-serif;
   
-  --color-bg-deep: #050505;
-  --color-bg-charcoal: #0a0a0a;
+  --color-bg-deep: #0f0f0f;
+  --color-bg-charcoal: #1a1a1a;
   --color-emerald-glow: #10b981;
   --color-emerald-dark: #064e3b;
-  --color-glass: rgba(255, 255, 255, 0.03);
-  --color-glass-border: rgba(16, 185, 129, 0.05);
+  --color-glass: rgba(255, 255, 255, 0.02);
+  --color-glass-border: rgba(16, 185, 129, 0.08);
 }
 
 @layer base {
@@ -30,24 +30,27 @@
   }
 }
 
+/* Neo-Minimalist Glass Effect */
 .elite-glass {
   background: var(--color-glass);
-  backdrop-filter: blur(28px) saturate(180%);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
   border: 1px solid var(--color-glass-border);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
 }
 
+/* Bento Card with Premium styling */
 .bento-card {
   @apply elite-glass rounded-[28px] transition-all duration-500 relative overflow-hidden;
 }
 
 .bento-card:hover {
-  @apply border-emerald-500/20;
-  transform: translateY(-4px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(16, 185, 129, 0.05);
+  @apply border-emerald-500/15;
+  transform: translateY(-2px);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4), 0 0 24px rgba(16, 185, 129, 0.03);
 }
 
+/* Pro Glow Effect */
 .pro-glow {
   position: relative;
 }
@@ -56,7 +59,7 @@
   content: '';
   position: absolute;
   inset: -1px;
-  background: linear-gradient(45deg, transparent, rgba(16, 185, 129, 0.3), transparent);
+  background: linear-gradient(45deg, transparent, rgba(16, 185, 129, 0.2), transparent);
   border-radius: inherit;
   z-index: -1;
   animation: border-glow 4s linear infinite;
@@ -74,17 +77,31 @@
   100% { background-position: 0% 50%; }
 }
 
+/* Input Bar Styling */
 .ios-input-bar {
   @apply elite-glass rounded-full px-6 py-4 flex items-center gap-4 w-full border-white/10;
   box-shadow: 0 10px 40px rgba(0,0,0,0.5);
 }
 
-.logo-gradient {
-  background: linear-gradient(to bottom, #ffffff 0%, #10b981 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+.ios-input-container {
+  @apply elite-glass rounded-[22px] border border-white/5;
+  transition: all 0.3s ease;
 }
 
+.ios-input-container:focus-within {
+  @apply border-emerald-glow/20;
+  box-shadow: 0 12px 48px rgba(16, 185, 129, 0.1);
+}
+
+/* Logo Gradient */
+.logo-gradient {
+  background: linear-gradient(135deg, #ffffff 0%, #10b981 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Animations */
 @keyframes shimmer {
   0% { transform: translateX(-100%); }
   100% { transform: translateX(100%); }

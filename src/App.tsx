@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, lazy, Suspense } from 'react';
-import { Send, Loader2, Sparkles, Calculator, Image as ImageIcon, X, ExternalLink, Copy, Check, RotateCcw, StickyNote, ArrowRightLeft } from 'lucide-react';
+import { Send, Sparkles, Calculator, X, Copy, RotateCcw, StickyNote, ArrowRightLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import ReactMarkdown from 'react-markdown';
 import { chatWithAI } from './services/gemini';
@@ -52,27 +52,17 @@ export default function App() {
   });
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<{ data: string, mimeType: string } | null>(null);
-  const [maxGrade, setMaxGrade] = useState(() => localStorage.getItem('escolaia_max_grade') || '10');
-  const [maxSources, setMaxSources] = useState(() => localStorage.getItem('escolaia_max_sources') || '3');
-  const [schoolYear, setSchoolYear] = useState(() => localStorage.getItem('escolaia_school_year') || '9º ano do Ensino Fundamental');
-  const [studyIntensity, setStudyIntensity] = useState(() => parseInt(localStorage.getItem('escolaia_study_intensity') || '50'));
-  const [studyDepth, setStudyDepth] = useState(() => localStorage.getItem('escolaia_study_depth') || 'normal');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [customApiKey, setCustomApiKey] = useState(() => localStorage.getItem('escolaia_api_key') || '');
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   const [isKeyValidating, setIsKeyValidating] = useState(false);
   const [keyStatus, setKeyStatus] = useState<'idle' | 'success' | 'error'>('idle');
-  const [successMessageId, setSuccessMessageId] = useState<string | null>(null);
   const [isFlashing, setIsFlashing] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // New features state
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
   const [calcInput, setCalcInput] = useState('');
-  const [pomodoroTime, setPomodoroTime] = useState(25 * 60);
-  const [isPomodoroActive, setIsPomodoroActive] = useState(false);
   const [isNotesOpen, setIsNotesOpen] = useState(false);
   const [quickNotes, setQuickNotes] = useState(() => localStorage.getItem('escolaia_quick_notes') || '');
   const [isConverterOpen, setIsConverterOpen] = useState(false);
@@ -91,12 +81,6 @@ export default function App() {
     localStorage.setItem('escolaia_quick_notes', quickNotes);
   }, [quickNotes]);
 
-  useEffect(() => { localStorage.setItem('escolaia_max_grade', maxGrade); }, [maxGrade]);
-  useEffect(() => { localStorage.setItem('escolaia_max_sources', maxSources); }, [maxSources]);
-  useEffect(() => { localStorage.setItem('escolaia_school_year', schoolYear); }, [schoolYear]);
-  useEffect(() => { localStorage.setItem('escolaia_study_intensity', studyIntensity.toString()); }, [studyIntensity]);
-  useEffect(() => { localStorage.setItem('escolaia_study_depth', studyDepth); }, [studyDepth]);
-
   const handleConvert = () => {
     const val = parseFloat(convValue);
     if (isNaN(val)) return setConvResult('Valor inválido');
@@ -109,29 +93,6 @@ export default function App() {
       case 'kg_g': setConvResult(`${val * 1000} g`); break;
       default: setConvResult('---');
     }
-  };
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isPomodoroActive && pomodoroTime > 0) {
-      interval = setInterval(() => {
-        setPomodoroTime((prev) => prev - 1);
-      }, 1000);
-    } else if (pomodoroTime === 0) {
-      setIsPomodoroActive(false);
-    }
-    return () => clearInterval(interval);
-  }, [isPomodoroActive, pomodoroTime]);
-
-  const togglePomodoro = () => setIsPomodoroActive(!isPomodoroActive);
-  const resetPomodoro = () => {
-    setIsPomodoroActive(false);
-    setPomodoroTime(25 * 60);
-  };
-  const formatTime = (timeInSeconds: number) => {
-    const minutes = Math.floor(timeInSeconds / 60);
-    const seconds = timeInSeconds % 60;
-    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
   const handleCalcClick = (val: string) => {
@@ -168,27 +129,13 @@ export default function App() {
     setIsKeyValidating(true);
     setKeyStatus('idle');
     try {
-      await chatWithAI('Oi', [], undefined, false, schoolYear, undefined, customApiKey.trim(), modelType);
+      await chatWithAI('Oi', [], undefined, false, '9º ano', undefined, customApiKey.trim(), modelType);
       setKeyStatus('success');
       setTimeout(() => setShowApiKeyInput(false), 1500);
     } catch (err) {
       setKeyStatus('error');
     } finally {
       setIsKeyValidating(false);
-    }
-  };
-
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setSelectedImage({
-          data: (reader.result as string).split(',')[1],
-          mimeType: file.type
-        });
-      };
-      reader.readAsDataURL(file);
     }
   };
 
@@ -204,27 +151,21 @@ export default function App() {
 
   const handleSend = async (toolPrompt?: string) => {
     const textToSend = toolPrompt ? `${toolPrompt}\n\n${input}` : input;
-    if ((!textToSend.trim() && !selectedImage) || isLoading) return;
+    if (!textToSend.trim() || isLoading) return;
     
     if (toolPrompt) {
       setIsFlashing(true);
       setTimeout(() => setIsFlashing(false), 600);
     }
 
-    let finalPrompt = textToSend;
-    if (textToSend.includes('[MAX_GRADE]')) finalPrompt = textToSend.replace('[MAX_GRADE]', maxGrade);
-    
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
-      content: finalPrompt,
-      image: selectedImage ? `data:${selectedImage.mimeType};base64,${selectedImage.data}` : undefined
+      content: textToSend
     };
 
     setMessages(prev => [...prev, userMessage]);
     setInput('');
-    const currentImage = selectedImage;
-    setSelectedImage(null);
     setIsLoading(true);
 
     try {
@@ -234,12 +175,12 @@ export default function App() {
       }));
 
       const response = await chatWithAI(
-        finalPrompt, 
+        textToSend, 
         history, 
-        currentImage || undefined, 
-        finalPrompt.includes('MODO PESQUISA ATIVADO'), 
-        schoolYear, 
-        finalPrompt.includes('MODO ESTUDAR ATIVADO') ? { intensity: studyIntensity, depth: studyDepth } : undefined,
+        undefined, 
+        false, 
+        '9º ano',
+        undefined,
         customApiKey.trim(),
         modelType
       );
@@ -252,11 +193,6 @@ export default function App() {
         content: finalContent,
         sources: response.sources
       }]);
-      
-      if (currentImage) {
-        setSuccessMessageId(userMessage.id);
-        setTimeout(() => setSuccessMessageId(null), 3000);
-      }
     } catch (error: any) {
       setMessages(prev => [...prev, {
         id: Date.now().toString(),
@@ -337,38 +273,34 @@ export default function App() {
       
       <main className="flex-1 flex flex-col relative w-full h-full">
         {/* Top bar with Model Selector */}
-        <div className="flex items-center justify-between px-8 py-6 z-50">
-          <div className="flex items-center gap-3">
-            <h1 className="text-xl font-display font-black tracking-tighter logo-gradient">EscolaIA v3.0</h1>
-            <div className="h-4 w-[1px] bg-white/10 mx-2" />
-            <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
-              <button 
-                onClick={() => setModelType('normal')}
-                className={cn(
-                  "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
-                  modelType === 'normal' ? "bg-white/10 text-white" : "text-slate-500 hover:text-white"
-                )}
-              >
-                Normal
-              </button>
-              <button 
-                onClick={() => setModelType('pro')}
-                className={cn(
-                  "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2",
-                  modelType === 'pro' ? "bg-emerald-glow text-black shadow-[0_0_15px_rgba(16,185,129,0.3)]" : "text-slate-500 hover:text-white"
-                )}
-              >
-                {modelType === 'pro' && <Sparkles size={10} />}
-                v3.0 Pro
-              </button>
-            </div>
-          </div>
+        <div className="flex items-center justify-between px-8 py-6 z-50 border-b border-white/5">
+          <h1 className="text-lg font-display font-black tracking-tighter logo-gradient">EscolaIA</h1>
           
-          <div className="flex items-center gap-4">
-            <button onClick={clearChat} className="p-2 text-slate-500 hover:text-red-400 transition-colors">
-              <RotateCcw size={18} />
+          <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
+            <button 
+              onClick={() => setModelType('normal')}
+              className={cn(
+                "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                modelType === 'normal' ? "bg-white/10 text-white" : "text-slate-500 hover:text-white"
+              )}
+            >
+              Normal
+            </button>
+            <button 
+              onClick={() => setModelType('pro')}
+              className={cn(
+                "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2",
+                modelType === 'pro' ? "bg-emerald-glow text-black shadow-[0_0_15px_rgba(16,185,129,0.3)]" : "text-slate-500 hover:text-white"
+              )}
+            >
+              {modelType === 'pro' && <Sparkles size={10} />}
+              v3.0 Pro
             </button>
           </div>
+          
+          <button onClick={clearChat} className="p-2 text-slate-500 hover:text-emerald-glow transition-colors">
+            <RotateCcw size={18} />
+          </button>
         </div>
 
         {/* Chat Area */}
@@ -376,79 +308,73 @@ export default function App() {
           ref={scrollRef}
           className="flex-1 overflow-y-auto px-6 md:px-0 space-y-12 no-scrollbar"
         >
-          <div className="max-w-[800px] mx-auto py-12">
+          <div className="max-w-[850px] mx-auto py-12">
             {messages.length === 0 ? (
-              <div className="space-y-20 py-20">
+              <div className="space-y-16 py-20">
                 <motion.div
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="space-y-6"
                 >
-                  <h2 className="text-5xl md:text-7xl font-display font-black text-white tracking-tighter leading-[0.9]">
+                  <h2 className="text-6xl md:text-7xl font-display font-black text-white tracking-tighter leading-[0.9]">
                     No que posso te <br />
-                    <span className="logo-gradient">ajudar hoje?</span>
+                    <span className="logo-gradient">ajudar?</span>
                   </h2>
-                  <p className="text-slate-500 text-lg max-w-md font-medium">
-                    A IA mais preparada para o 8º e 9º ano. <br />
-                    Foco total no seu aprendizado.
+                  <p className="text-slate-400 text-base max-w-lg font-light">
+                    A IA mais preparada para você. Acesso ao melhor conhecimento em qualquer momento.
                   </p>
                 </motion.div>
 
-                {/* Elite Bento Grid Tools */}
-                <div className="grid grid-cols-1 md:grid-cols-6 grid-rows-2 gap-4 h-[400px]">
+                {/* Bento Cards - Minimalist Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {/* Calculadora - Grande */}
                   <motion.div 
                     whileHover={{ scale: 1.02 }}
                     onClick={() => setIsCalculatorOpen(true)}
-                    className="md:col-span-3 md:row-span-2 bento-card p-8 flex flex-col justify-between cursor-pointer group"
+                    className="md:col-span-1 md:row-span-2 bento-card p-8 flex flex-col justify-between cursor-pointer group h-[300px]"
                   >
                     <div className="w-12 h-12 rounded-2xl bg-emerald-glow/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <Calculator className="text-emerald-glow" size={24} />
+                      <Calculator className="text-emerald-glow" size={28} />
                     </div>
                     <div>
-                      <h3 className="text-xl font-black text-white mb-2">Calculadora Científica</h3>
-                      <p className="text-slate-500 text-xs font-medium">Fórmulas complexas e resultados instantâneos para matemática e física.</p>
+                      <h3 className="text-2xl font-black text-white mb-2">Calculadora</h3>
+                      <p className="text-slate-400 text-sm font-light">Científica e completa</p>
                     </div>
                   </motion.div>
 
+                  {/* Notas */}
                   <motion.div 
                     whileHover={{ scale: 1.02 }}
                     onClick={() => setIsNotesOpen(true)}
-                    className="md:col-span-3 bento-card p-6 flex items-center gap-6 cursor-pointer group"
+                    className="bento-card p-8 flex flex-col justify-between cursor-pointer group"
                   >
                     <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center group-hover:rotate-12 transition-transform">
-                      <StickyNote className="text-blue-400" size={20} />
+                      <StickyNote className="text-blue-400" size={22} />
                     </div>
                     <div>
-                      <h3 className="text-base font-black text-white">Notas Rápidas</h3>
-                      <p className="text-slate-500 text-[10px] font-medium tracking-wide">Salve seus insights sem sair do chat.</p>
+                      <h3 className="text-lg font-black text-white">Notas</h3>
+                      <p className="text-slate-400 text-xs font-light">Rápidas e offline</p>
                     </div>
                   </motion.div>
 
+                  {/* Conversor */}
                   <motion.div 
                     whileHover={{ scale: 1.02 }}
-                    className="md:col-span-1 bento-card p-4 flex flex-col items-center justify-center gap-3 cursor-pointer group"
+                    className="bento-card p-8 flex flex-col justify-between cursor-pointer group"
                     onClick={() => setIsConverterOpen(true)}
                   >
-                    <ArrowRightLeft className="text-purple-400 group-hover:scale-110 transition-transform" size={20} />
-                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest text-center">Conversor</span>
-                  </motion.div>
-
-                  <motion.div 
-                    whileHover={{ scale: 1.02 }}
-                    className="md:col-span-2 bento-card p-4 flex flex-col justify-center cursor-pointer group"
-                    onClick={() => handleSend("Plano de estudos para a próxima prova.")}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-amber-500/10">
-                        <Sparkles className="text-amber-400" size={16} />
-                      </div>
-                      <span className="text-xs font-black text-white uppercase tracking-tight">Estudo Pro</span>
+                    <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <ArrowRightLeft className="text-purple-400" size={22} />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-black text-white">Conversor</h3>
+                      <p className="text-slate-400 text-xs font-light">Unidades e medidas</p>
                     </div>
                   </motion.div>
                 </div>
               </div>
             ) : (
-              <div className="space-y-12">
+              <div className="space-y-8">
                 <AnimatePresence mode="popLayout">
                   {messages.map((m) => (
                     <motion.div
@@ -461,18 +387,13 @@ export default function App() {
                       )}
                     >
                       <div className={cn(
-                        "max-w-[85%] space-y-4",
+                        "max-w-[90%] space-y-3",
                         m.role === 'user' ? "text-right" : "text-left"
                       )}>
-                        {m.image && (
-                          <div className="inline-block rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
-                            <img src={m.image} alt="Upload" className="max-h-60 w-auto" />
-                          </div>
-                        )}
                         <div className={cn(
-                          "p-6 md:p-8 rounded-[2rem] transition-all duration-500",
+                          "p-6 rounded-3xl transition-all duration-500",
                           m.role === 'user' 
-                            ? "bg-white/5 border border-white/10 text-white font-medium shadow-xl" 
+                            ? "bg-emerald-glow/10 border border-emerald-glow/20 text-white font-medium" 
                             : "bg-transparent text-slate-300 font-light text-lg leading-relaxed",
                           isLoading && messages[messages.length - 1].id === m.id && "opacity-50"
                         )}>
@@ -482,7 +403,7 @@ export default function App() {
                         </div>
                         {m.role === 'model' && (
                           <div className="flex gap-4 px-2">
-                            <button onClick={() => copyToClipboard(m)} className="text-[10px] font-black uppercase text-slate-600 hover:text-white transition-colors tracking-[0.2em]">
+                            <button onClick={() => copyToClipboard(m)} className="text-[10px] font-black uppercase text-slate-600 hover:text-emerald-glow transition-colors tracking-[0.2em]">
                               {copiedId === m.id ? 'Copiado' : 'Copiar'}
                             </button>
                           </div>
@@ -503,49 +424,30 @@ export default function App() {
           </div>
         </div>
 
-        {/* iOS Floating Input */}
-        <div className="w-full max-w-[800px] mx-auto p-8 relative">
+        {/* Floating Input Bar */}
+        <div className="w-full max-w-[850px] mx-auto px-8 py-8 relative">
           <div className="relative group">
-            {selectedImage && (
-              <div className="absolute -top-24 left-4 p-2 bento-card">
-                <img src={`data:${selectedImage.mimeType};base64,${selectedImage.data}`} alt="preview" className="h-16 w-16 object-cover rounded-xl" />
-                <button onClick={() => setSelectedImage(null)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-lg">
-                  <X size={10} />
-                </button>
-              </div>
-            )}
-            
-            <div className="ios-input-container p-2 flex items-center gap-2 group-focus-within:border-emerald-glow/40 transition-all duration-700">
-              <button onClick={() => fileInputRef.current?.click()} className="p-4 text-slate-500 hover:text-emerald-glow transition-colors">
-                <ImageIcon size={22} />
-              </button>
-              <input 
-                type="file" ref={fileInputRef} onChange={handleImageSelect} className="hidden" accept="image/*"
-              />
+            <div className="ios-input-container p-3 flex items-center gap-3 group-focus-within:border-emerald-glow/40 transition-all duration-700">
               <input 
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                 placeholder="Pergunte qualquer coisa..."
-                className="flex-1 bg-transparent border-none focus:ring-0 text-white text-lg placeholder:text-slate-600"
+                className="flex-1 bg-transparent border-none focus:ring-0 text-white text-base placeholder:text-slate-500"
               />
               <button 
                 onClick={() => handleSend()}
-                disabled={(!input.trim() && !selectedImage) || isLoading}
+                disabled={!input.trim() || isLoading}
                 className={cn(
-                  "p-4 rounded-full transition-all duration-500",
-                  input.trim() || selectedImage ? "bg-emerald-glow text-black scale-100 shadow-[0_0_20px_rgba(16,185,129,0.3)]" : "text-slate-700 scale-90"
+                  "p-3 rounded-full transition-all duration-500",
+                  input.trim() ? "bg-emerald-glow text-black scale-100 shadow-[0_0_20px_rgba(16,185,129,0.3)]" : "text-slate-700 scale-90"
                 )}
               >
-                <Send size={22} className="rotate-[-10deg] group-hover:rotate-0 transition-transform" />
+                <Send size={20} className="rotate-[-10deg] group-hover:rotate-0 transition-transform" />
               </button>
             </div>
           </div>
-          
-          <p className="text-center mt-6 text-[10px] text-slate-700 font-black uppercase tracking-[0.4em]">
-            © 2026 EscolaIA | v3.0
-          </p>
         </div>
       </main>
 
