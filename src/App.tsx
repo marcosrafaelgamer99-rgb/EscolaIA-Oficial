@@ -258,11 +258,6 @@ export default function App() {
     );
   }
 
-
-  useEffect(() => {
-    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-  }, [messages, isLoading]);
-
   return (
     <div className={cn(
       "flex h-screen bg-[#0a0a0a] overflow-hidden font-sans relative",
