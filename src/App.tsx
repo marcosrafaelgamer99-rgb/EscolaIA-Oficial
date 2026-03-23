@@ -129,7 +129,7 @@ export default function App() {
     setIsKeyValidating(true);
     setKeyStatus('idle');
     try {
-      await chatWithAI('Oi', [], undefined, false, '9º ano', undefined, customApiKey.trim(), modelType);
+      await chatWithAI('Oi', [], undefined, false, undefined, undefined, customApiKey.trim(), modelType);
       setKeyStatus('success');
       setTimeout(() => setShowApiKeyInput(false), 1500);
     } catch (err) {
@@ -177,10 +177,10 @@ export default function App() {
       const response = await chatWithAI(
         textToSend, 
         history, 
-        undefined, 
-        false, 
-        '9º ano',
-        undefined,
+        undefined, // image
+        false,     // useSearch
+        undefined, // schoolYear
+        undefined, // studyConfig
         customApiKey.trim(),
         modelType
       );
