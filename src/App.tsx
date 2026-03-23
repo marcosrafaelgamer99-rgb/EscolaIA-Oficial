@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, lazy, Suspense } from 'react';
-import { Send, Sparkles, Calculator, X, Copy, RotateCcw, StickyNote, ArrowRightLeft } from 'lucide-react';
+import { Send, Sparkles, Calculator, X, Copy, RotateCcw, StickyNote, ArrowRightLeft, ChevronDown, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import ReactMarkdown from 'react-markdown';
 import { chatWithAI } from './services/gemini';
@@ -72,6 +72,7 @@ export default function App() {
   const [modelType, setModelType] = useState<'normal' | 'pro'>(() => {
     return (localStorage.getItem('escolaia_model_type') as 'normal' | 'pro') || 'pro';
   });
+  const [isModelMenuOpen, setIsModelMenuOpen] = useState(false);
   const [schoolYear, setSchoolYear] = useState(() => {
     return localStorage.getItem('escolaia_school_year') || '9º Ano';
   });
@@ -293,27 +294,75 @@ export default function App() {
               <option value="Ensino Médio" className="bg-[#0a0a0a]">Ensino Médio</option>
             </select>
 
-            <div className="flex bg-white/5 p-1.5 rounded-lg border border-white/10 gap-1">
+            <div className="relative">
               <button 
-                onClick={() => setModelType('normal')}
-                className={cn(
-                  "px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide transition-all duration-300",
-                  modelType === 'normal' ? "bg-white/15 text-white shadow-md" : "text-slate-400 hover:text-slate-200"
-                )}
+                onClick={() => setIsModelMenuOpen(!isModelMenuOpen)}
+                className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-300 outline-none hover:bg-white/10 transition-all"
               >
-                Normal
+                {modelType === 'pro' && <Sparkles size={11} className="text-emerald-glow" />}
+                {modelType === 'pro' ? 'v3.0 Pro' : 'Normal'}
+                <ChevronDown size={12} className={cn("transition-transform duration-300", isModelMenuOpen && "rotate-180")} />
               </button>
-              <button 
-                onClick={() => setModelType('pro')}
-                className={cn(
-                  "px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide transition-all duration-300 flex items-center gap-1.5",
-                  modelType === 'pro' ? "bg-emerald-glow text-black shadow-[0_0_12px_rgba(16,185,129,0.2)]" : "text-slate-400 hover:text-slate-200"
+
+              <AnimatePresence>
+                {isModelMenuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-[60]" onClick={() => setIsModelMenuOpen(false)} />
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="absolute right-0 mt-2 w-72 z-[70] cristal-fume rounded-xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10"
+                      style={{ backdropFilter: 'blur(20px)' }}
+                    >
+                      <div className="p-2 space-y-1">
+                        <button 
+                          onClick={() => { setModelType('normal'); setIsModelMenuOpen(false); }}
+                          className={cn(
+                            "w-full flex items-start gap-4 p-4 rounded-lg transition-all text-left group",
+                            modelType === 'normal' ? "bg-white/10" : "hover:bg-white/5"
+                          )}
+                        >
+                          <div className={cn(
+                            "mt-1 w-5 h-5 rounded-full border flex items-center justify-center transition-colors",
+                            modelType === 'normal' ? "border-white border-2" : "border-white/20 group-hover:border-white/40"
+                          )}>
+                            {modelType === 'normal' && <div className="w-2 h-2 rounded-full bg-white shadow-[0_0_8px_white]" />}
+                          </div>
+                          <div className="flex-1">
+                            <div className="text-[11px] font-bold text-white uppercase tracking-wider mb-0.5">Normal</div>
+                            <div className="text-[10px] text-slate-500 font-medium leading-tight">Respostas rápidas e diretas para o dia a dia.</div>
+                          </div>
+                        </button>
+
+                        <button 
+                          onClick={() => { setModelType('pro'); setIsModelMenuOpen(false); }}
+                          className={cn(
+                            "w-full flex items-start gap-4 p-4 rounded-lg transition-all text-left group",
+                            modelType === 'pro' ? "bg-white/10" : "hover:bg-white/5"
+                          )}
+                        >
+                          <div className={cn(
+                            "mt-1 w-5 h-5 rounded-full border flex items-center justify-center transition-colors",
+                            modelType === 'pro' ? "border-emerald-glow border-2" : "border-white/20 group-hover:border-emerald-glow/40"
+                          )}>
+                            {modelType === 'pro' && <div className="w-2 h-2 rounded-full bg-emerald-glow shadow-[0_0_10px_rgba(16,185,129,0.8)]" />}
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <div className="text-[11px] font-bold text-white uppercase tracking-wider">v3.0 Pro</div>
+                              <div className="bg-emerald-glow/20 text-emerald-glow text-[8px] px-1.5 py-0.5 rounded font-black tracking-tighter">PRO</div>
+                            </div>
+                            <div className="text-[10px] text-slate-500 font-medium leading-tight">Raciocínio avançado, mentoria e dicas de jogos.</div>
+                          </div>
+                        </button>
+                      </div>
+                    </motion.div>
+                  </>
                 )}
-              >
-                {modelType === 'pro' && <Sparkles size={11} />}
-                Pro
-              </button>
+              </AnimatePresence>
             </div>
+
             <button onClick={clearChat} className="p-2 text-slate-500 hover:text-emerald-glow transition-colors duration-300">
               <RotateCcw size={16} />
             </button>
