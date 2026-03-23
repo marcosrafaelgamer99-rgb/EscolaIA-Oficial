@@ -43,16 +43,17 @@ export async function chatWithAI(
   customApiKey?: string,
   modelType: 'normal' | 'pro' = 'pro'
 ) {
-  // Solução Definitiva para Vercel/Vite
-  const apiKey = customApiKey || import.meta.env.VITE_GEMINI_API_KEY || "";
+  // SOLUÇÃO BRUTA: Chave única VITE_GEMINI_API_KEY
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || customApiKey || "";
 
   if (!apiKey) {
-    console.error('❌ [EscolaIA] ERRO: Chave API não encontrada no ambiente (VITE_GEMINI_API_KEY).');
-    throw new Error("A chave da API do Gemini não foi encontrada no servidor.");
+    console.error('❌ ERRO CRÍTICO: Chave VITE_GEMINI_API_KEY não encontrada no ambiente.');
+    throw new Error("A chave da API não foi configurada corretamente na Vercel.");
   }
 
-  const ai = new GoogleGenAI(apiKey);
-  const model = "gemini-2.0-flash-exp";
+  // Inicialização do SDK existente (@google/genai)
+  const ai = new GoogleGenAI({ apiKey });
+  const model = "gemini-1.5-flash"; 
   
   const parts: any[] = [{ text: message }];
   if (image) {
@@ -67,15 +68,15 @@ export async function chatWithAI(
   let studyInstruction = "";
   if (studyConfig) {
     studyInstruction = `\n\nMODO ESTUDAR ATIVADO:
-    - INTENSIDADE (Quanto quer estudar): ${studyConfig.intensity}/100.
-    - PROFUNDIDADE (Como explicar): ${studyConfig.depth}.
-    Ajuste a resposta para este nível de detalhamento.`;
+    - INTENSIDADE: ${studyConfig.intensity}/100.
+    - PROFUNDIDADE: ${studyConfig.depth}.`;
   }
 
   const baseInstruction = modelType === 'pro' ? PRO_INSTRUCTION : BASE_INSTRUCTION;
-  const dynamicInstruction = `${baseInstruction}\n\nO USUÁRIO ESTÁ NO SEGUINTE ANO ESCOLAR: ${schoolYear}. Ajuste o nível de complexidade, rigor da nota e linguagem para este nível específico.${studyInstruction}`;
+  const dynamicInstruction = `${baseInstruction}\n\nO USUÁRIO ESTÁ NO SEGUINTE ANO ESCOLAR: ${schoolYear}.${studyInstruction}`;
 
   try {
+    // Uso da API original do projeto
     const result = await ai.models.generateContent({
       model,
       contents: [
@@ -84,7 +85,6 @@ export async function chatWithAI(
       ],
       config: {
         systemInstruction: dynamicInstruction,
-        tools: useSearch ? [{ googleSearch: {} }] : undefined,
       },
     });
 
@@ -95,40 +95,13 @@ export async function chatWithAI(
     return {
       text: result.text,
       isFallback: false,
-      sources: result.candidates?.[0]?.groundingMetadata?.groundingChunks?.map((chunk: any) => ({
-        title: chunk.web?.title,
-        uri: chunk.web?.uri
-      })).filter((s: any) => s.uri) || []
+      sources: []
     };
   } catch (error: any) {
-    console.error("Gemini API Error:", error);
-    
-    // Fallback logic: If search fails due to quota (429), try again without search
-    if (useSearch && (error.message?.includes('429') || error.message?.includes('RESOURCE_EXHAUSTED') || error.message?.includes('quota'))) {
-      console.log("Search quota exceeded, falling back to standard model knowledge...");
-      try {
-        const fallbackResponse = await ai.models.generateContent({
-          model: "gemini-3-flash-preview",
-          contents: [
-            ...history,
-            { role: "user", parts }
-          ],
-          config: {
-            systemInstruction: dynamicInstruction + "\n\nAVISO: O limite de pesquisa em tempo real foi atingido. Responda usando apenas seu conhecimento interno, mas mencione que não foi possível acessar a internet agora.",
-          },
-        });
-
-        if (fallbackResponse.text) {
-          return {
-            text: fallbackResponse.text,
-            isFallback: true,
-            sources: []
-          };
-        }
-      } catch (fallbackError) {
-        console.error("Fallback failed:", fallbackError);
-      }
-    }
+    // LOG DE ERRO DETALHADO (BRUTO)
+    console.error("❌ ERRO REAL DA API DO GOOGLE (F12):", error);
+    console.error("MENSAGEM:", error.message);
+    if (error.stack) console.error("STACK:", error.stack);
     
     throw error;
   }
