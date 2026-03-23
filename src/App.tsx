@@ -275,33 +275,22 @@ export default function App() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(16,185,129,0.04)_0%,transparent_50%)] pointer-events-none" />
       
       <main className="flex-1 flex flex-col relative w-full h-full">
-        {/* Top bar with Model Selector */}
         <div className="flex items-center justify-between px-8 py-5 z-50 border-b border-white/5 bg-black/20 backdrop-blur-sm">
-          <div className="flex items-center gap-2">
-            <h1 className="text-lg font-display font-black tracking-tighter logo-gradient">EscolaIA v3.0 Pro</h1>
-          </div>
-          
-          <div className="flex gap-3 items-center">
-            <select 
-              value={schoolYear}
-              onChange={(e) => setSchoolYear(e.target.value)}
-              className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-300 outline-none focus:border-emerald-glow/30 transition-all cursor-pointer hover:bg-white/10"
-            >
-              <option value="6º Ano" className="bg-[#0a0a0a]">6º Ano</option>
-              <option value="7º Ano" className="bg-[#0a0a0a]">7º Ano</option>
-              <option value="8º Ano" className="bg-[#0a0a0a]">8º Ano</option>
-              <option value="9º Ano" className="bg-[#0a0a0a]">9º Ano</option>
-              <option value="Ensino Médio" className="bg-[#0a0a0a]">Ensino Médio</option>
-            </select>
-
+          <div className="flex items-center gap-6">
+            {/* Unified Title & Model Selector Trigger */}
             <div className="relative">
               <button 
                 onClick={() => setIsModelMenuOpen(!isModelMenuOpen)}
-                className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-300 outline-none hover:bg-white/10 transition-all"
+                className="flex items-center gap-2 hover:opacity-80 transition-all group"
               >
-                {modelType === 'pro' && <Sparkles size={11} className="text-emerald-glow" />}
-                {modelType === 'pro' ? 'v3.0 Pro' : 'Normal'}
-                <ChevronDown size={12} className={cn("transition-transform duration-300", isModelMenuOpen && "rotate-180")} />
+                <div className="flex items-baseline">
+                  <span className="text-xl font-display font-black tracking-tighter logo-gradient">EscolaIA</span>
+                  <span className="text-slate-500 font-bold text-[11px] ml-1.5 tracking-widest uppercase">v3.0</span>
+                  {modelType === 'pro' && (
+                    <span className="ml-2 text-xl font-display font-black tracking-tighter logo-gradient">Pro</span>
+                  )}
+                </div>
+                <ChevronDown size={14} className={cn("text-slate-500 transition-transform duration-300 ml-1", isModelMenuOpen && "rotate-180")} />
               </button>
 
               <AnimatePresence>
@@ -312,7 +301,7 @@ export default function App() {
                       initial={{ opacity: 0, y: 10, scale: 0.95 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      className="absolute right-0 mt-2 w-72 z-[70] cristal-fume rounded-xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10"
+                      className="absolute left-0 mt-4 w-72 z-[70] cristal-fume rounded-xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10"
                       style={{ backdropFilter: 'blur(20px)' }}
                     >
                       <div className="p-2 space-y-1">
@@ -330,8 +319,8 @@ export default function App() {
                             {modelType === 'normal' && <div className="w-2 h-2 rounded-full bg-white shadow-[0_0_8px_white]" />}
                           </div>
                           <div className="flex-1">
-                            <div className="text-[11px] font-bold text-white uppercase tracking-wider mb-0.5">Normal</div>
-                            <div className="text-[10px] text-slate-500 font-medium leading-tight">Respostas rápidas e diretas para o dia a dia.</div>
+                            <div className="text-[11px] font-bold text-white uppercase tracking-wider mb-0.5">EscolaIA v3.0</div>
+                            <div className="text-[10px] text-slate-500 font-medium leading-tight">Respostas rápidas e eficientes para o dia a dia.</div>
                           </div>
                         </button>
 
@@ -350,10 +339,10 @@ export default function App() {
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-0.5">
-                              <div className="text-[11px] font-bold text-white uppercase tracking-wider">v3.0 Pro</div>
+                              <div className="text-[11px] font-bold text-white uppercase tracking-wider">EscolaIA v3.0 Pro</div>
                               <div className="bg-emerald-glow/20 text-emerald-glow text-[8px] px-1.5 py-0.5 rounded font-black tracking-tighter">PRO</div>
                             </div>
-                            <div className="text-[10px] text-slate-500 font-medium leading-tight">Raciocínio avançado, mentoria e dicas de jogos.</div>
+                            <div className="text-[10px] text-slate-500 font-medium leading-tight">Mentoria avançada com raciocínio profundo.</div>
                           </div>
                         </button>
                       </div>
@@ -362,7 +351,21 @@ export default function App() {
                 )}
               </AnimatePresence>
             </div>
-
+            
+            <select 
+              value={schoolYear}
+              onChange={(e) => setSchoolYear(e.target.value)}
+              className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 outline-none focus:border-emerald-glow/30 transition-all cursor-pointer hover:bg-white/10"
+            >
+              <option value="6º Ano" className="bg-[#0a0a0a]">6º Ano</option>
+              <option value="7º Ano" className="bg-[#0a0a0a]">7º Ano</option>
+              <option value="8º Ano" className="bg-[#0a0a0a]">8º Ano</option>
+              <option value="9º Ano" className="bg-[#0a0a0a]">9º Ano</option>
+              <option value="Ensino Médio" className="bg-[#0a0a0a]">Ensino Médio</option>
+            </select>
+          </div>
+          
+          <div className="flex gap-3 items-center">
             <button onClick={clearChat} className="p-2 text-slate-500 hover:text-emerald-glow transition-colors duration-300">
               <RotateCcw size={16} />
             </button>
