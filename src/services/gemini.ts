@@ -45,9 +45,14 @@ export async function chatWithAI(
 ) {
   const apiKey = 
     customApiKey ||
+    (import.meta.env ? (import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.VITE_API_KEY) : null) ||
     (typeof process !== 'undefined' && process.env ? (process.env.GEMINI_API_KEY || process.env.API_KEY) : null) || 
-    (import.meta.env ? (import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.VITE_API_KEY) : null) || 
     "";
+
+  // Diagnostic Log (Terminal/Console)
+  if (!apiKey) {
+    console.warn("⚠️ [EscolaIA] Gemini API Key is MISSING or UNDEFINED.");
+  }
 
   if (!apiKey) {
     throw new Error("A chave da API do Gemini não foi encontrada. Por favor, verifique as configurações do ambiente.");
