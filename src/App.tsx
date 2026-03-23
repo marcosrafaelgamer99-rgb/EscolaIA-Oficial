@@ -72,6 +72,13 @@ export default function App() {
   const [modelType, setModelType] = useState<'normal' | 'pro'>(() => {
     return (localStorage.getItem('escolaia_model_type') as 'normal' | 'pro') || 'pro';
   });
+  const [schoolYear, setSchoolYear] = useState(() => {
+    return localStorage.getItem('escolaia_school_year') || '9º Ano';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('escolaia_school_year', schoolYear);
+  }, [schoolYear]);
 
   useEffect(() => {
     localStorage.setItem('escolaia_model_type', modelType);
@@ -129,7 +136,7 @@ export default function App() {
     setIsKeyValidating(true);
     setKeyStatus('idle');
     try {
-      await chatWithAI('Oi', [], undefined, false, undefined, undefined, customApiKey.trim(), modelType);
+      await chatWithAI('Oi', [], undefined, false, schoolYear, undefined, customApiKey.trim(), modelType);
       setKeyStatus('success');
       setTimeout(() => setShowApiKeyInput(false), 1500);
     } catch (err) {
@@ -179,7 +186,7 @@ export default function App() {
         history, 
         undefined, // image
         false,     // useSearch
-        undefined, // schoolYear
+        schoolYear, // schoolYear
         undefined, // studyConfig
         customApiKey.trim(),
         modelType
@@ -274,6 +281,18 @@ export default function App() {
           </div>
           
           <div className="flex gap-3 items-center">
+            <select 
+              value={schoolYear}
+              onChange={(e) => setSchoolYear(e.target.value)}
+              className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-300 outline-none focus:border-emerald-glow/30 transition-all cursor-pointer hover:bg-white/10"
+            >
+              <option value="6º Ano" className="bg-[#0a0a0a]">6º Ano</option>
+              <option value="7º Ano" className="bg-[#0a0a0a]">7º Ano</option>
+              <option value="8º Ano" className="bg-[#0a0a0a]">8º Ano</option>
+              <option value="9º Ano" className="bg-[#0a0a0a]">9º Ano</option>
+              <option value="Ensino Médio" className="bg-[#0a0a0a]">Ensino Médio</option>
+            </select>
+
             <div className="flex bg-white/5 p-1.5 rounded-lg border border-white/10 gap-1">
               <button 
                 onClick={() => setModelType('normal')}

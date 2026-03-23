@@ -75,7 +75,7 @@ export async function chatWithAI(
   }
 
   const baseInstruction = modelType === 'pro' ? PRO_INSTRUCTION : BASE_INSTRUCTION;
-  const dynamicInstruction = `${baseInstruction}${studyInstruction}`;
+  const dynamicInstruction = `${baseInstruction}\n\nO USUÁRIO ESTÁ NO SEGUINTE ANO ESCOLAR: ${schoolYear}. Ajuste o nível de complexidade, rigor da nota e linguagem para este nível específico.${studyInstruction}`;
 
   try {
     const result = await ai.models.generateContent({
