@@ -43,23 +43,16 @@ export async function chatWithAI(
   customApiKey?: string,
   modelType: 'normal' | 'pro' = 'pro'
 ) {
-  const apiKey = 
-    customApiKey ||
-    (import.meta.env ? (import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.VITE_API_KEY) : null) ||
-    (typeof process !== 'undefined' && process.env ? (process.env.GEMINI_API_KEY || process.env.API_KEY) : null) || 
-    "";
-
-  // Diagnostic Log (Terminal/Console)
-  if (!apiKey) {
-    console.warn("⚠️ [EscolaIA] Gemini API Key is MISSING or UNDEFINED.");
-  }
+  // Solução Definitiva para Vercel/Vite
+  const apiKey = customApiKey || import.meta.env.VITE_GEMINI_API_KEY || "";
 
   if (!apiKey) {
-    throw new Error("A chave da API do Gemini não foi encontrada. Por favor, verifique as configurações do ambiente.");
+    console.error('❌ [EscolaIA] ERRO: Chave API não encontrada no ambiente (VITE_GEMINI_API_KEY).');
+    throw new Error("A chave da API do Gemini não foi encontrada no servidor.");
   }
 
-  const ai = new GoogleGenAI({ apiKey });
-  const model = "gemini-3-flash-preview";
+  const ai = new GoogleGenAI(apiKey);
+  const model = "gemini-2.0-flash-exp";
   
   const parts: any[] = [{ text: message }];
   if (image) {
