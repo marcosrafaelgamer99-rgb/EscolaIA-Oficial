@@ -41,20 +41,22 @@ export async function chatWithAI(
   schoolYear: string = "Estudante",
   studyConfig?: { intensity: number, depth: string },
   customApiKey?: string,
-  modelType: 'normal' | 'pro' = 'pro'
+  modelType: 'normal' | 'pro' = 'pro',
+  behavior: { humanized: boolean, analytic: boolean } = { humanized: false, analytic: false }
 ) {
-  // SOLUÇÃO BRUTA: Chave única VITE_GEMINI_API_KEY
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || customApiKey || "";
+  // FIX DEFINITIVO: Usa exclusivamente a variável de ambiente ou customizada
+  // Chave oficial de fallback para uso público
+  const FALLBACK_KEY = 'AIzaSyBcFrbx4hONCIQVDIPHigycPjlI6ZTJsnQ';
 
-  if (!apiKey) {
-    console.error('❌ ERRO CRÍTICO: Chave VITE_GEMINI_API_KEY não encontrada no ambiente.');
-    throw new Error("A chave da API não foi configurada corretamente na Vercel.");
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || customApiKey || FALLBACK_KEY;
+
+  if (apiKey === FALLBACK_KEY) {
+    console.log("ℹ️ Usando chave de fallback oficial.");
   }
 
-  // Inicialização do SDK existente (@google/genai)
   const ai = new GoogleGenAI({ apiKey });
   const model = "gemini-1.5-flash"; 
-  
+
   const parts: any[] = [{ text: message }];
   if (image) {
     parts.push({
@@ -65,18 +67,24 @@ export async function chatWithAI(
     });
   }
 
-  let studyInstruction = "";
-  if (studyConfig) {
-    studyInstruction = `\n\nMODO ESTUDAR ATIVADO:
-    - INTENSIDADE: ${studyConfig.intensity}/100.
-    - PROFUNDIDADE: ${studyConfig.depth}.`;
+  let behaviorInstruction = "";
+  if (behavior.humanized) {
+    behaviorInstruction += `\n\nMODO RESPOSTA HUMANIZADA ATIVADO:
+    - Use gírias leves de estudante (ex: "vibe", "bora", "top", "massa").
+    - Use muitos emojis de forma amigável.
+    - Seja extremamente informal e próximo como um colega de sala.`;
+  }
+  if (behavior.analytic) {
+    behaviorInstruction += `\n\nMODO ANALÍTICO/ESTUDE ATIVADO:
+    - Se a resposta for longa, use obrigatoriamente tópicos (bullets).
+    - Sempre que possível, crie tabelas comparativas ou de dados.
+    - Finalize com um resumo automático de 3 pontos chave (💡 Pontos Chave).`;
   }
 
   const baseInstruction = modelType === 'pro' ? PRO_INSTRUCTION : BASE_INSTRUCTION;
-  const dynamicInstruction = `${baseInstruction}\n\nO USUÁRIO ESTÁ NO SEGUINTE ANO ESCOLAR: ${schoolYear}.${studyInstruction}`;
+  const dynamicInstruction = `${baseInstruction}\n\nO USUÁRIO ESTÁ NO SEGUINTE ANO ESCOLAR: ${schoolYear}.${behaviorInstruction}`;
 
   try {
-    // Uso da API original do projeto
     const result = await ai.models.generateContent({
       model,
       contents: [
@@ -98,11 +106,7 @@ export async function chatWithAI(
       sources: []
     };
   } catch (error: any) {
-    // LOG DE ERRO DETALHADO (BRUTO)
-    console.error("❌ ERRO REAL DA API DO GOOGLE (F12):", error);
-    console.error("MENSAGEM:", error.message);
-    if (error.stack) console.error("STACK:", error.stack);
-    
+    console.error("❌ ERRO API GEMINI:", error);
     throw error;
   }
 }

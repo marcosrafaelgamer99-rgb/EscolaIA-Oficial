@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, lazy, Suspense } from 'react';
-import { Send, Sparkles, Calculator, X, Copy, RotateCcw, StickyNote, ArrowRightLeft, ChevronDown, Check } from 'lucide-react';
+import { Send, Sparkles, Calculator, X, Copy, RotateCcw, StickyNote, ArrowRightLeft, ChevronDown, Check, Search, BookOpen, Smile, BarChart3, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import ReactMarkdown from 'react-markdown';
 import { chatWithAI } from './services/gemini';
@@ -41,11 +41,6 @@ const Typewriter = ({ text, delay = 100 }: { text: string, delay?: number }) => 
 };
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem('escolaia_authenticated') === 'true';
-  });
-  const [authCode, setAuthCode] = useState('');
-  const [authError, setAuthError] = useState('');
   const [messages, setMessages] = useState<Message[]>(() => {
     const saved = localStorage.getItem('escolaia_chat_history');
     return saved ? JSON.parse(saved) : [];
@@ -53,10 +48,6 @@ export default function App() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [customApiKey, setCustomApiKey] = useState(() => localStorage.getItem('escolaia_api_key') || '');
-  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
-  const [isKeyValidating, setIsKeyValidating] = useState(false);
-  const [keyStatus, setKeyStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [isFlashing, setIsFlashing] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -70,9 +61,13 @@ export default function App() {
   const [convType, setConvType] = useState('m_cm');
   const [convResult, setConvResult] = useState('');
   const [modelType, setModelType] = useState<'normal' | 'pro'>(() => {
-    return (localStorage.getItem('escolaia_model_type') as 'normal' | 'pro') || 'pro';
+    // Forçamos o modo normal inicialmente já que o Pro está bloqueado
+    return 'normal';
   });
   const [isModelMenuOpen, setIsModelMenuOpen] = useState(false);
+  const [isToolsMenuOpen, setIsToolsMenuOpen] = useState(false);
+  const [behaviorHumanized, setBehaviorHumanized] = useState(false);
+  const [behaviorAnalytic, setBehaviorAnalytic] = useState(false);
   const [schoolYear, setSchoolYear] = useState(() => {
     return localStorage.getItem('escolaia_school_year') || '9º Ano';
   });
@@ -120,32 +115,19 @@ export default function App() {
 
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      // Use requestAnimationFrame para garantir que o DOM foi atualizado antes de rolar
+      requestAnimationFrame(() => {
+        if (scrollRef.current) {
+          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+      });
     }
   }, [messages, isLoading]);
 
-  useEffect(() => {
-    localStorage.setItem('escolaia_api_key', customApiKey.trim());
-  }, [customApiKey]);
 
   useEffect(() => {
     localStorage.setItem('escolaia_chat_history', JSON.stringify(messages));
   }, [messages]);
-
-  const validateApiKey = async () => {
-    if (!customApiKey.trim()) return;
-    setIsKeyValidating(true);
-    setKeyStatus('idle');
-    try {
-      await chatWithAI('Oi', [], undefined, false, schoolYear, undefined, customApiKey.trim(), modelType);
-      setKeyStatus('success');
-      setTimeout(() => setShowApiKeyInput(false), 1500);
-    } catch (err) {
-      setKeyStatus('error');
-    } finally {
-      setIsKeyValidating(false);
-    }
-  };
 
   const copyToClipboard = async (message: Message) => {
     try {
@@ -189,8 +171,9 @@ export default function App() {
         false,     // useSearch
         schoolYear, // schoolYear
         undefined, // studyConfig
-        customApiKey.trim(),
-        modelType
+        undefined, // customApiKey (Automated)
+        modelType,
+        { humanized: behaviorHumanized, analytic: behaviorAnalytic }
       );
       
       let finalContent = response.text || 'Desculpe, tive um problema ao processar sua resposta.';
@@ -205,8 +188,9 @@ export default function App() {
       setMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'model',
-        content: `Ops! Algo deu errado. Verifique sua conexão ou chave API.`,
+        content: `Ops! Algo deu errado ao processar sua mensagem. ${error.message || ''}`,
       }]);
+      console.error(error);
     } finally {
       setIsLoading(false);
     }
@@ -219,56 +203,9 @@ export default function App() {
     }
   };
 
-  const handleAuth = (e: React.FormEvent) => {
-    e.preventDefault();
-    const code = authCode.trim().toUpperCase();
-    if (AUTHORIZED_CODES[code]) {
-      localStorage.setItem('escolaia_authenticated', 'true');
-      setIsAuthenticated(true);
-    } else {
-      setAuthError('Código inválido');
-      setTimeout(() => setAuthError(''), 3000);
-    }
-  };
-
-  if (!isAuthenticated) {
-    return (
-      <div className="h-screen w-screen bg-[#0a0a0a] flex items-center justify-center p-6 font-sans overflow-hidden relative">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(16,185,129,0.03)_0%,transparent_70%)] pointer-events-none" />
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-sm cristal-fume p-12 text-center rounded-[28px]"
-        >
-          <div className="space-y-6">
-            <h1 className="text-4xl font-display font-black tracking-tighter logo-gradient">EscolaIA v3.0 Pro</h1>
-            <p className="text-slate-500 text-[10px] uppercase tracking-[0.4em] font-black">Acesso Premium</p>
-            
-            <form onSubmit={handleAuth} className="space-y-6">
-              <input 
-                type="text"
-                value={authCode}
-                onChange={(e) => setAuthCode(e.target.value)}
-                placeholder="Código de Acesso"
-                className="w-full bg-white/5 border border-white/10 rounded-[16px] px-6 py-4 text-center text-lg text-white outline-none focus:border-emerald-glow transition-all duration-500"
-              />
-              <button 
-                type="submit"
-                className="w-full bg-emerald-glow text-black font-black py-4 rounded-[16px] hover:scale-[1.02] active:scale-95 transition-all shadow-[0_0_30px_rgba(16,185,129,0.2)]"
-              >
-                ENTRAR
-              </button>
-            </form>
-            {authError && <p className="text-red-400 text-[10px] font-black uppercase tracking-widest">{authError}</p>}
-          </div>
-        </motion.div>
-      </div>
-    );
-  }
-
   return (
     <div className={cn(
-      "flex h-screen bg-[#0a0a0a] overflow-hidden font-sans relative",
+      "flex h-[100dvh] bg-[#0a0a0a] overflow-hidden font-sans relative",
       isFlashing && "selection-flash"
     )}>
       {/* Mesh Background */}
@@ -277,79 +214,13 @@ export default function App() {
       <main className="flex-1 flex flex-col relative w-full h-full">
         <div className="flex items-center justify-between px-8 py-5 z-50 border-b border-white/5 bg-black/20 backdrop-blur-sm">
           <div className="flex items-center gap-6">
-            {/* Unified Title & Model Selector Trigger */}
-            <div className="relative">
-              <button 
-                onClick={() => setIsModelMenuOpen(!isModelMenuOpen)}
-                className="flex items-center gap-2 hover:opacity-80 transition-all group"
-              >
-                <div className="flex items-baseline">
-                  <span className="text-xl font-display font-black tracking-tighter logo-gradient">EscolaIA</span>
-                  <span className="text-slate-500 font-bold text-[11px] ml-1.5 tracking-widest uppercase">v3.0</span>
-                  {modelType === 'pro' && (
-                    <span className="ml-2 text-xl font-display font-black tracking-tighter logo-gradient">Pro</span>
-                  )}
-                </div>
-                <ChevronDown size={14} className={cn("text-slate-500 transition-transform duration-300 ml-1", isModelMenuOpen && "rotate-180")} />
-              </button>
-
-              <AnimatePresence>
-                {isModelMenuOpen && (
-                  <>
-                    <div className="fixed inset-0 z-[60]" onClick={() => setIsModelMenuOpen(false)} />
-                    <motion.div 
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      className="absolute left-0 mt-4 w-72 z-[70] cristal-fume rounded-xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10"
-                      style={{ backdropFilter: 'blur(20px)' }}
-                    >
-                      <div className="p-2 space-y-1">
-                        <button 
-                          onClick={() => { setModelType('normal'); setIsModelMenuOpen(false); }}
-                          className={cn(
-                            "w-full flex items-start gap-4 p-4 rounded-lg transition-all text-left group",
-                            modelType === 'normal' ? "bg-white/10" : "hover:bg-white/5"
-                          )}
-                        >
-                          <div className={cn(
-                            "mt-1 w-5 h-5 rounded-full border flex items-center justify-center transition-colors",
-                            modelType === 'normal' ? "border-white border-2" : "border-white/20 group-hover:border-white/40"
-                          )}>
-                            {modelType === 'normal' && <div className="w-2 h-2 rounded-full bg-white shadow-[0_0_8px_white]" />}
-                          </div>
-                          <div className="flex-1">
-                            <div className="text-[11px] font-bold text-white uppercase tracking-wider mb-0.5">EscolaIA v3.0</div>
-                            <div className="text-[10px] text-slate-500 font-medium leading-tight">Respostas rápidas e eficientes para o dia a dia.</div>
-                          </div>
-                        </button>
-
-                        <button 
-                          onClick={() => { setModelType('pro'); setIsModelMenuOpen(false); }}
-                          className={cn(
-                            "w-full flex items-start gap-4 p-4 rounded-lg transition-all text-left group",
-                            modelType === 'pro' ? "bg-white/10" : "hover:bg-white/5"
-                          )}
-                        >
-                          <div className={cn(
-                            "mt-1 w-5 h-5 rounded-full border flex items-center justify-center transition-colors",
-                            modelType === 'pro' ? "border-emerald-glow border-2" : "border-white/20 group-hover:border-emerald-glow/40"
-                          )}>
-                            {modelType === 'pro' && <div className="w-2 h-2 rounded-full bg-emerald-glow shadow-[0_0_10px_rgba(16,185,129,0.8)]" />}
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <div className="text-[11px] font-bold text-white uppercase tracking-wider">EscolaIA v3.0 Pro</div>
-                              <div className="bg-emerald-glow/20 text-emerald-glow text-[8px] px-1.5 py-0.5 rounded font-black tracking-tighter">PRO</div>
-                            </div>
-                            <div className="text-[10px] text-slate-500 font-medium leading-tight">Mentoria avançada com raciocínio profundo.</div>
-                          </div>
-                        </button>
-                      </div>
-                    </motion.div>
-                  </>
-                )}
-              </AnimatePresence>
+            {/* Unified Title */}
+            <div className="flex items-baseline">
+              <span className="text-xl font-display font-black tracking-tighter logo-gradient">EscolaIA</span>
+              <span className="text-slate-500 font-bold text-[11px] ml-1.5 tracking-widest uppercase">v3.0</span>
+              {modelType === 'pro' && (
+                <span className="ml-2 text-xl font-display font-black tracking-tighter logo-gradient">Pro</span>
+              )}
             </div>
             
             <select 
@@ -496,28 +367,197 @@ export default function App() {
           </div>
         </div>
 
-        {/* Input Bar - Floating Pill */}
+        {/* Integrated Writing Bar - Modern AI Style */}
         <div className="w-full fixed bottom-8 left-0 right-0 z-50 pointer-events-none">
-          <div className="max-w-[850px] mx-auto px-6 pointer-events-auto">
-            <div className="relative group">
-              <div className="floating-pill p-1.5 group-focus-within:bg-white/[0.05]">
-                <input 
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                  placeholder="Pergunte qualquer coisa..."
-                  className="flex-1 bg-transparent border-none focus:ring-0 text-white text-sm md:text-base placeholder:text-slate-500 outline-none px-4"
-                />
+          <div className="max-w-[850px] mx-auto px-6 pointer-events-auto relative">
+            
+            {/* Tools Pop-over Menu */}
+            <AnimatePresence>
+              {isToolsMenuOpen && (
+                <>
+                  {/* Floating Tools Menu (Bottom Sheet on Mobile, Pop-over on Desktop) */}
+                  {/* Backdrop for Mobile */}
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 bg-black/50 z-40 md:hidden"
+                    onClick={() => setIsToolsMenuOpen(false)}
+                  />
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    transition={{ type: "spring", bounce: 0.3, duration: 0.4 }}
+                    className="fixed bottom-0 left-0 right-0 z-50 md:absolute md:bottom-full md:left-0 md:mb-4 md:w-80 cristal-fume p-4 border border-white/10 md:rounded-3xl rounded-t-3xl rounded-b-none shadow-[0_-10px_40px_rgba(0,0,0,0.5)] md:shadow-[0_10px_40px_rgba(0,0,0,0.5)] origin-bottom-left" style={{ backdropFilter: 'blur(30px)', backgroundColor: 'rgba(30, 30, 30, 0.7)' }}
+                  >
+                    {/* Handle for Mobile */}
+                    <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-4 md:hidden" />
+                    <div className="space-y-6">
+                      {/* Group O QUE FAZER? */}
+                      <div className="space-y-3">
+                        <span className="text-[10px] font-black text-slate-500 px-2 uppercase tracking-[0.2em]">O QUE FAZER?</span>
+                        <div className="grid grid-cols-1 gap-2">
+                          <button 
+                            onClick={() => { setInput(prev => `Responda isto: ${prev}`); setIsToolsMenuOpen(false); }}
+                            className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-all text-left group"
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-emerald-glow/10 flex items-center justify-center group-hover:bg-emerald-glow group-hover:text-black transition-all">
+                              <Check size={16} />
+                            </div>
+                            <div>
+                              <div className="text-[12px] font-bold text-white">Responda</div>
+                              <div className="text-[10px] text-slate-500">Respostas diretas e rápidas</div>
+                            </div>
+                          </button>
+                          <button 
+                            onClick={() => { setInput(prev => `Analise este conteúdo profundamente: ${prev}`); setIsToolsMenuOpen(false); }}
+                            className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-all text-left group"
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500 group-hover:text-black transition-all">
+                              <Search size={16} />
+                            </div>
+                            <div>
+                              <div className="text-[12px] font-bold text-white">Analise</div>
+                              <div className="text-[10px] text-slate-500">Explicação profunda e detalhada</div>
+                            </div>
+                          </button>
+                          <button 
+                            onClick={() => { setInput(prev => `Estude o seguinte tema: ${prev}`); setIsToolsMenuOpen(false); }}
+                            className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-all text-left group"
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center group-hover:bg-purple-500 group-hover:text-black transition-all">
+                              <BookOpen size={16} />
+                            </div>
+                            <div>
+                              <div className="text-[12px] font-bold text-white">Estude</div>
+                              <div className="text-[10px] text-slate-500">Planos de estudo e resumos</div>
+                            </div>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Group FUNÇÕES */}
+                      <div className="space-y-3">
+                        <span className="text-[10px] font-black text-slate-500 px-2 uppercase tracking-[0.2em]">FUNÇÕES</span>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button 
+                            onClick={() => setBehaviorHumanized(!behaviorHumanized)}
+                            className={cn(
+                              "flex flex-col gap-2 p-3 rounded-xl transition-all text-left border",
+                              behaviorHumanized ? "bg-emerald-glow/20 border-emerald-glow/50" : "bg-white/5 border-transparent hover:bg-white/10"
+                            )}
+                          >
+                            <Smile size={16} className={behaviorHumanized ? "text-emerald-glow" : "text-white"} />
+                            <div className="text-[11px] font-bold text-white">Humanizado</div>
+                          </button>
+                          <button 
+                            onClick={() => setBehaviorAnalytic(!behaviorAnalytic)}
+                            className={cn(
+                              "flex flex-col gap-2 p-3 rounded-xl transition-all text-left border",
+                              behaviorAnalytic ? "bg-emerald-glow/20 border-emerald-glow/50" : "bg-white/5 border-transparent hover:bg-white/10"
+                            )}
+                          >
+                            <BarChart3 size={16} className={behaviorAnalytic ? "text-emerald-glow" : "text-white"} />
+                            <div className="text-[11px] font-bold text-white">Analítico</div>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+
+            {/* The Integrated Pill Bar */}
+            <div className="cristal-fume p-2 sm:p-2.5 rounded-[32px] md:rounded-[36px] flex items-center border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.4)] relative group/bar focus-within:border-emerald-glow/30 transition-all md:backdrop-blur-[25px] backdrop-blur-[15px]" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}>
+              <div className="flex items-center gap-1 sm:gap-1.5 group/left">
+                <button className="p-2 sm:p-3 text-emerald-glow hover:text-white transition-all hover:scale-110 active:scale-95 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)] shrink-0">
+                  <Sparkles size={18} className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
+                </button>
+                <button 
+                  onClick={() => setIsToolsMenuOpen(!isToolsMenuOpen)}
+                  className={cn(
+                    "flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-[14px] sm:rounded-2xl text-[10px] sm:text-[12px] font-bold transition-all border shrink-0",
+                    isToolsMenuOpen 
+                      ? "bg-emerald-glow/20 text-emerald-glow border-emerald-glow/50" 
+                      : "text-slate-300 hover:bg-white/10 border-transparent bg-white/5 shadow-inner"
+                  )}
+                >
+                  <Sparkles size={14} className={cn("transition-colors w-3 h-3 sm:w-3.5 sm:h-3.5 hidden sm:block", isToolsMenuOpen ? "text-white" : "text-emerald-glow")} />
+                  <span className="hidden sm:inline">Ferramentas</span>
+                  <span className="sm:hidden">Ferram</span>
+                </button>
+              </div>
+
+              <input 
+                type="text"
+                autoFocus={true}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                placeholder="Pergunte qualquer coisa..."
+                className="flex-1 bg-transparent border-none focus:ring-0 text-white text-sm placeholder:text-slate-600 outline-none px-4"
+              />
+
+              <div className="flex items-center gap-2 px-2">
+                {/* Integrated Model Selector */}
+                <div className="relative">
+                  <button 
+                    onClick={() => setIsModelMenuOpen(!isModelMenuOpen)}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 transition-all border border-white/5"
+                  >
+                    <span className="text-[10px] font-black text-white uppercase tracking-tighter">
+                      {modelType === 'pro' ? 'Pro' : 'v3.0'}
+                    </span>
+                    <ChevronDown size={12} className={cn("text-slate-500 transition-transform", isModelMenuOpen && "rotate-180")} />
+                  </button>
+
+                  <AnimatePresence>
+                    {isModelMenuOpen && (
+                      <>
+                        <div className="fixed inset-0 z-[60]" onClick={() => setIsModelMenuOpen(false)} />
+                        <motion.div 
+                          initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                          className="absolute bottom-full right-0 mb-4 w-64 z-[70] cristal-fume rounded-2xl overflow-hidden shadow-2xl border border-white/10 p-1"
+                        >
+                          <button 
+                            onClick={() => { setModelType('normal'); setIsModelMenuOpen(false); }}
+                            className={cn(
+                              "w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left",
+                              modelType === 'normal' ? "bg-white/10" : "hover:bg-white/5"
+                            )}
+                          >
+                            <div className="w-1.5 h-1.5 rounded-full bg-white ml-1 opacity-50" />
+                            <div className="text-[11px] font-bold text-white">EscolaIA v3.0</div>
+                          </button>
+                          <button 
+                            onClick={() => { alert('O Modo Pro está em fase de testes e chegará em breve!'); }}
+                            className="w-full flex items-center justify-between p-3 rounded-xl transition-all text-left opacity-40 cursor-not-allowed group"
+                          >
+                            <div className="flex items-center gap-3">
+                              <Lock size={12} className="text-slate-500 ml-1" />
+                              <div className="text-[11px] font-bold text-slate-400">EscolaIA v3.0 Pro</div>
+                            </div>
+                            <span className="text-[8px] font-black bg-white/10 px-1.5 py-0.5 rounded text-white tracking-tighter">EM BREVE</span>
+                          </button>
+                        </motion.div>
+                      </>
+                    )}
+                  </AnimatePresence>
+                </div>
+
                 <button 
                   onClick={() => handleSend()}
                   disabled={!input.trim() || isLoading}
                   className={cn(
-                    "p-4 rounded-full transition-all duration-500",
-                    input.trim() ? "bg-emerald-glow text-black scale-100 shadow-[0_0_24px_rgba(16,185,129,0.3)] hover:scale-105" : "text-slate-600 scale-90 cursor-not-allowed"
+                    "p-2.5 rounded-full transition-all duration-500",
+                    input.trim() ? "bg-emerald-glow text-black scale-100 shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:scale-105" : "text-slate-700 scale-95 opacity-50 cursor-not-allowed"
                   )}
                 >
-                  <Send size={16} className="rotate-[-10deg] group-hover:rotate-0 transition-transform duration-500" />
+                  <Send size={18} />
                 </button>
               </div>
             </div>
