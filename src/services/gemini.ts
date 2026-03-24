@@ -54,8 +54,11 @@ export async function chatWithAI(
     console.log("ℹ️ Usando chave de fallback oficial.");
   }
 
-  const ai = new GoogleGenAI({ apiKey });
-  const model = "gemini-1.5-pro-latest"; 
+  const ai = new GoogleGenAI({ 
+    apiKey,
+    httpOptions: { apiVersion: 'v1' } // Força a versão v1 (estável)
+  });
+  const model = "gemini-1.5-flash"; 
 
   const parts: any[] = [{ text: message }];
   if (image) {
