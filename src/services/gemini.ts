@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 declare global {
   interface Window {
@@ -54,11 +54,7 @@ export async function chatWithAI(
     console.log("ℹ️ Usando chave de fallback oficial.");
   }
 
-  const ai = new GoogleGenAI({ 
-    apiKey,
-    httpOptions: { apiVersion: 'v1' } // Força a versão v1 (estável)
-  });
-  const model = "gemini-1.5-flash"; 
+  const genAI = new GoogleGenerativeAI(apiKey);
 
   const parts: any[] = [{ text: message }];
   if (image) {
@@ -87,24 +83,25 @@ export async function chatWithAI(
   const baseInstruction = modelType === 'pro' ? PRO_INSTRUCTION : BASE_INSTRUCTION;
   const dynamicInstruction = `${baseInstruction}\n\nO USUÁRIO ESTÁ NO SEGUINTE ANO ESCOLAR: ${schoolYear}.${behaviorInstruction}`;
 
+  const model = genAI.getGenerativeModel({
+    model: "gemini-1.5-flash",
+    systemInstruction: dynamicInstruction
+  });
+
   try {
-    const result = await ai.models.generateContent({
-      model,
+    const result = await model.generateContent({
       contents: [
         ...history,
         { role: "user", parts }
-      ],
-      config: {
-        systemInstruction: dynamicInstruction,
-      },
+      ]
     });
 
-    if (!result.text) {
+    if (!result.response.text()) {
       throw new Error("O assistente não retornou nenhuma resposta de texto.");
     }
 
     return {
-      text: result.text,
+      text: result.response.text(),
       isFallback: false,
       sources: []
     };
