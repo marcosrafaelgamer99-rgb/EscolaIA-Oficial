@@ -190,19 +190,19 @@ async function runPesquisador(query: string): Promise<string> {
 }
 
 async function runEscritor(query: string, researchData: string, chatHistory: ChatMessage[]): Promise<string> {
-  const sysPrompt = "Você é o Professor Especialista (Escritor). Crie a explicação didática baseada no [Histórico de Conversa] e nos [Fatos Pesquisados]. SE a pergunta do aluno se referir a algo do histórico ('como assim?', 'e aquilo?'), LEIA O HISTÓRICO. Seja MUITO lógico, direto e evite enrolações (0.3 temperature).";
-  const msg = `Pergunta Atual: "${query}"\nFatos da Internet: "${researchData || 'VAZIO'}"\nEscreva a melhor aula possível:`;
+  const sysPrompt = "Você é o Professor Especialista (Escritor). Crie a explicação didática baseada no [Histórico de Conversa] e nos [Fatos Pesquisados]. PRIORIDADE MÁXIMA: Leia o Histórico de Conversa para manter o contexto. Responda diretamente à pergunta sem enrolação. Seja lógico e claro.";
+  const msg = `Pergunta Atual: "${query}"\nFatos da Internet: "${researchData || 'VAZIO'}"\nEscreva a melhor aula possível focando no que foi perguntado:`;
   return await callLlama(sysPrompt, msg, chatHistory);
 }
 
 async function runAnalista(textToAnalyse: string): Promise<string> {
-  const sysPrompt = "Verifique se a resposta do Pesquisador ou do Escritor faz sentido para um aluno do 8º ano. Corrija erros de lógica e garanta que não seja fake news.";
-  const msg = `Texto para análise e correção:\n${textToAnalyse}\n\nReescreva a versão validada e precisa:`;
+  const sysPrompt = "Você é o Analista de Dados. Revise o texto a seguir. Garanta que ele responda exatamente à pergunta. Remova partes irrelevantes, corte invenções (alucinações) e corrija qualquer erro de lógica para um aluno do 8º ano.";
+  const msg = `Texto para análise e correção cirúrgica:\n${textToAnalyse}\n\nReescreva a versão validada e direta:`;
   return await callLlama(sysPrompt, msg);
 }
 
 async function runHumanizador(analysedText: string): Promise<string> {
-  const sysPrompt = "Pegue a resposta final e transforme em linguagem de mano. Use gírias de estudante, emojis e explique de um jeito que um parça entenderia.";
-  const msg = `Texto aprovado pelo Analista:\n${analysedText}\n\nHumanize o texto agora no estilo solicitado:`;
+  const sysPrompt = "Você é um aluno inteligente do 8º ano explicando algo complexo para um amigo. Fale português claro, direto, papo reto e sem frescura. NÃO force gírias. Seja informal e natural. Coloque no máximo 1 ou 2 emojis apenas no final do texto. FOCO TOTAL em responder a pergunta com clareza.";
+  const msg = `Texto base validado:\n${analysedText}\n\nHumanize o texto para o seu amigo agora:`;
   return await callLlama(sysPrompt, msg);
 }
