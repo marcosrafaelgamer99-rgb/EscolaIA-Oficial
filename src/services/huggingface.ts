@@ -8,6 +8,7 @@ const MODEL_NAME = "meta-llama/Llama-3.2-1B-Instruct";
 
 export type AgentState = 
   | 'idle' 
+  | 'local'
   | 'supervisor'
   | 'pesquisador' 
   | 'escritor' 
@@ -16,6 +17,7 @@ export type AgentState =
 
 export const AgentStateMessages: Record<AgentState, string> = {
   idle: '',
+  local: '⚡ Respondendo rápido (Modo Local)...',
   supervisor: '🧠 Supervisor mapeando a dúvida...',
   pesquisador: '🔍 Pesquisando no Google e YouTube...',
   escritor: '✍️ Escrevendo a explicação didática...',
@@ -30,18 +32,27 @@ export const AgentStateMessages: Record<AgentState, string> = {
  */
 export async function processarDuvidaEscolar(
   query: string, 
-  onStateChange: (state: AgentState) => void
+  onStateChange: (state: AgentState) => void,
+  modoPesquisaAtivado: boolean = false
 ): Promise<string> {
   try {
-    // 0. SUPERVISOR (Decisão de Rota)
-    onStateChange('supervisor');
-    const needsResearch = await runSupervisor(query);
-
     let researchData = "";
-    if (needsResearch) {
-      // 1. PESQUISADOR (Busca Fatos/YouTube)
-      onStateChange('pesquisador');
-      researchData = await runPesquisador(query);
+    
+    if (modoPesquisaAtivado) {
+      // 0. SUPERVISOR (Decisão de Rota)
+      onStateChange('supervisor');
+      const needsResearch = await runSupervisor(query);
+
+      if (needsResearch) {
+        // 1. PESQUISADOR (Busca Fatos/YouTube)
+        onStateChange('pesquisador');
+        researchData = await runPesquisador(query);
+      }
+    } else {
+      // MODO LOCAL (Sem requisições externas)
+      onStateChange('local');
+      // Pequeno timeout visual apenas para a UI não piscar rápido demais
+      await new Promise(r => setTimeout(r, 600));
     }
 
     // 2. ESCRITOR (Base Didática)

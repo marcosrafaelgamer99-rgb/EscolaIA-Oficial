@@ -10,6 +10,7 @@ import { twMerge } from 'tailwind-merge';
 
 const getAgentStyle = (state: AgentState): string => {
   switch (state) {
+    case 'local': return 'border-yellow-400/50 bg-yellow-400/20 text-yellow-300 shadow-[0_0_15px_rgba(250,204,21,0.4)]';
     case 'supervisor': return 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.3)]';
     case 'pesquisador': return 'border-blue-500/30 bg-blue-500/10 text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.3)]';
     case 'escritor': return 'border-amber-500/30 bg-amber-500/10 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.3)]';
@@ -63,6 +64,7 @@ export default function App() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isFlashing, setIsFlashing] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [modoPesquisaAtivado, setModoPesquisaAtivado] = useState(false);
 
   // New features state
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
@@ -177,10 +179,11 @@ export default function App() {
         parts: [{ text: m.content }]
       }));
 
-      // Chama o Cérebro Multi-Agente Llama-3.2 v3.0
+      // Chama o Cérebro Multi-Agente Llama-3.2 v3.0 com a preferência de pesquisa
       const responseText = await processarDuvidaEscolar(
         textToSend,
-        (state) => setAgentState(state)
+        (state) => setAgentState(state),
+        modoPesquisaAtivado
       );
       
       let finalContent = responseText || 'Desculpe, tive um problema ao processar sua resposta.';
@@ -532,6 +535,21 @@ export default function App() {
               />
 
               <div className="flex items-center gap-2 px-2">
+                {/* Lupa / Toggle de Pesquisa */}
+                <button
+                  type="button"
+                  onClick={() => setModoPesquisaAtivado(!modoPesquisaAtivado)}
+                  className={cn(
+                    "flex items-center justify-center p-2 rounded-xl transition-all border shrink-0",
+                    modoPesquisaAtivado 
+                      ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.2)]" 
+                      : "bg-white/5 text-slate-500 border-transparent hover:bg-white/10"
+                  )}
+                  title={modoPesquisaAtivado ? "Pesquisa Ociosa ON" : "Pesquisa Ociosa OFF"}
+                >
+                  <Search size={16} />
+                </button>
+
                 {/* Integrated Model Selector */}
                 <div className="relative">
                   <button 
