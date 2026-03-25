@@ -1,8 +1,7 @@
 import { HfInference } from "@huggingface/inference";
 
-// Inicializa o cliente do Hugging Face. Na prática, usa a variável real import.meta.env.VITE_HF_TOKEN
-const hfToken = import.meta.env.VITE_HF_TOKEN || "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";
-const hf = new HfInference(hfToken);
+// Inicializa o cliente do Hugging Face exatamente como solicitado
+const hf = new HfInference(import.meta.env.VITE_HF_TOKEN);
 
 // Modelo definido pelo usuário para a v3.0
 const MODEL_NAME = "meta-llama/Llama-3.2-1B-Instruct";
@@ -78,33 +77,27 @@ async function callLlama(sysPrompt: string, userMessage: string): Promise<string
   ];
 
   try {
-    const url = `https://api-inference.huggingface.co/models/${MODEL_NAME}/v1/chat/completions`;
-    
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${hfToken}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: MODEL_NAME,
-        messages: messages,
-        max_tokens: 500,
-        temperature: 0.7
-      })
+    const response = await hf.chatCompletion({
+      model: MODEL_NAME,
+      messages: messages as any,
+      max_tokens: 500,
+      temperature: 0.7,
     });
-
-    if (!response.ok) {
-      const errorData = await response.text();
-      console.error("[Hugging Face API Error Response]:", errorData);
-      console.error("[Status Code]:", response.status);
-      throw new Error(`HF API HTTP ${response.status}: ${errorData}`);
+    
+    return response.choices[0].message.content || "";
+  } catch (error: any) {
+    // Log exato do erro para a aba F12 do navegador
+    console.error("=== ERRO REAL DO HUGGING FACE ===");
+    console.error("Nome do Erro:", error.name);
+    console.error("Mensagem:", error.message);
+    console.error("Stack Trace:", error.stack);
+    console.error("=================================");
+    
+    // Se for 'Failed to fetch', normalmente é bloqueio de CORS ou chave inválida
+    if (error.message === "Failed to fetch") {
+      console.warn("Dica: 'Failed to fetch' no navegador costuma ser CORS bloqueando a requisição direta ou o modelo demorando muito para responder (Cold Start).");
     }
-
-    const data = await response.json();
-    return data.choices[0].message.content || "";
-  } catch (error) {
-    console.error("[callLlama] Exceção Capturada:", error);
+    
     throw error;
   }
 }
