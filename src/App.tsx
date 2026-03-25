@@ -3,9 +3,21 @@ import { Send, Sparkles, Calculator, X, Copy, RotateCcw, StickyNote, ArrowRightL
 import { motion, AnimatePresence } from 'motion/react';
 import ReactMarkdown from 'react-markdown';
 import { chatWithAI } from './services/gemini';
+import { processarDuvidaEscolar, AgentState, AgentStateMessages } from './services/huggingface';
 import { AUTHORIZED_CODES } from './codigos';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+
+const getAgentStyle = (state: AgentState): string => {
+  switch (state) {
+    case 'supervisor': return 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.3)]';
+    case 'pesquisador': return 'border-blue-500/30 bg-blue-500/10 text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.3)]';
+    case 'escritor': return 'border-amber-500/30 bg-amber-500/10 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.3)]';
+    case 'analista': return 'border-purple-500/30 bg-purple-500/10 text-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.3)]';
+    case 'humanizador': return 'border-orange-500/30 bg-orange-500/10 text-orange-400 shadow-[0_0_15px_rgba(249,115,22,0.3)]';
+    default: return 'border-white/10 bg-white/5 text-white/70';
+  }
+};
 
 const CalculatorModal = lazy(() => import('./components/Modals/CalculatorModal'));
 const NotesModal = lazy(() => import('./components/Modals/NotesModal'));
@@ -47,6 +59,7 @@ export default function App() {
   });
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [agentState, setAgentState] = useState<AgentState>('idle');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isFlashing, setIsFlashing] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -164,25 +177,18 @@ export default function App() {
         parts: [{ text: m.content }]
       }));
 
-      const response = await chatWithAI(
-        textToSend, 
-        history, 
-        undefined, // image
-        false,     // useSearch
-        schoolYear, // schoolYear
-        undefined, // studyConfig
-        undefined, // customApiKey (Automated)
-        modelType,
-        { humanized: behaviorHumanized, analytic: behaviorAnalytic }
+      // Chama o Cérebro Multi-Agente Llama-3.2 v3.0
+      const responseText = await processarDuvidaEscolar(
+        textToSend,
+        (state) => setAgentState(state)
       );
       
-      let finalContent = response.text || 'Desculpe, tive um problema ao processar sua resposta.';
+      let finalContent = responseText || 'Desculpe, tive um problema ao processar sua resposta.';
       
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'model',
-        content: finalContent,
-        sources: response.sources
+        content: finalContent
       }]);
     } catch (error: any) {
       setMessages(prev => [...prev, {
@@ -193,6 +199,7 @@ export default function App() {
       console.error(error);
     } finally {
       setIsLoading(false);
+      setAgentState('idle');
     }
   };
 
@@ -355,7 +362,7 @@ export default function App() {
                     </motion.div>
                   ))}
                 </AnimatePresence>
-                {isLoading && (
+                {isLoading && agentState === 'idle' && (
                   <div className="flex gap-1.5 p-4">
                     <div className="w-2 h-2 rounded-full bg-emerald-glow animate-bounce" style={{ animationDelay: '0ms' }} />
                     <div className="w-2 h-2 rounded-full bg-emerald-glow animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -370,6 +377,30 @@ export default function App() {
         {/* Integrated Writing Bar - Modern AI Style */}
         <div className="w-full fixed bottom-8 left-0 right-0 z-50 pointer-events-none">
           <div className="max-w-[850px] mx-auto px-6 pointer-events-auto relative">
+            
+            {/* Agent Status UI Indicator (Top of the Bar) */}
+            <AnimatePresence>
+              {agentState !== 'idle' && (
+                <motion.div
+                  initial={{ opacity: 0, y: 15, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                  className={cn(
+                    "absolute bottom-full left-6 sm:left-12 mb-3 px-4 py-2 rounded-2xl flex items-center gap-3 border shadow-lg backdrop-blur-md transition-all duration-500",
+                    getAgentStyle(agentState)
+                  )}
+                >
+                  <div className="flex gap-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-current animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <div className="w-1.5 h-1.5 rounded-full bg-current animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <div className="w-1.5 h-1.5 rounded-full bg-current animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
+                  <span className="text-[13px] font-bold tracking-wide animate-pulse truncate max-w-[200px] sm:max-w-none">
+                    {AgentStateMessages[agentState]}
+                  </span>
+                </motion.div>
+              )}
+            </AnimatePresence>
             
             {/* Tools Pop-over Menu */}
             <AnimatePresence>

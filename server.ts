@@ -16,6 +16,23 @@ async function startServer() {
     res.json({ status: "ok" });
   });
 
+  // YouTube Transcript API
+  app.get("/api/tools/youtube", async (req, res) => {
+    try {
+      const url = req.query.url as string;
+      if (!url) return res.status(400).json({ error: "URL is required" });
+      
+      const { YoutubeTranscript } = await import('youtube-transcript');
+      const transcript = await YoutubeTranscript.fetchTranscript(url);
+      
+      const text = transcript.map(t => t.text).join(' ').substring(0, 15000); // 15k char max limit for prompt
+      res.json({ text });
+    } catch (error: any) {
+      console.error("YouTube Tool Error:", error.message);
+      res.status(500).json({ error: "Failed to fetch transcript" });
+    }
+  });
+
   // Vite middleware for development
   const vite = await createViteServer({
     server: { middlewareMode: true },
