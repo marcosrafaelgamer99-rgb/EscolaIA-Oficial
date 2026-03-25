@@ -3,8 +3,8 @@ import { HfInference } from "@huggingface/inference";
 // Inicializa o cliente do Hugging Face exatamente como solicitado
 const hf = new HfInference(import.meta.env.VITE_HF_TOKEN);
 
-// Modelo definido pelo usuário para a v3.0
-const MODEL_NAME = "meta-llama/Llama-3.2-1B-Instruct";
+// Modelo definido pelo usuário para a v3.0 - Upgrade para 70B de parâmetros
+const MODEL_NAME = "meta-llama/Llama-3.3-70B-Instruct";
 
 export type AgentState = 
   | 'idle' 
@@ -98,8 +98,8 @@ async function callLlama(sysPrompt: string, userMessage: string, chatHistory: Ch
     const response = await hf.chatCompletion({
       model: MODEL_NAME,
       messages: messages as any,
-      max_tokens: 500,
-      temperature: 0.7,
+      max_tokens: 800,
+      temperature: 0.3,
     });
     
     return response.choices[0].message.content || "";
@@ -166,11 +166,11 @@ async function buscarYouTube(url: string): Promise<string> {
 async function runSupervisor(query: string, chatHistory: ChatMessage[]): Promise<boolean> {
   let context = "";
   if (chatHistory.length > 0) {
-    context = `[Histórico Recente]:\n${chatHistory.map(h => `${h.role}: ${h.content}`).join("\n")}\n\n`;
+    context = `[Histórico Recente da Conversa]:\n${chatHistory.map(h => `${h.role}: ${h.content}`).join("\n")}\n\n`;
   }
-  const sysPrompt = "Você coordena a equipe EscolaIA. Analise a pergunta do Marcos e o histórico recente. Se precisar de fatos novos ou YouTube, chame o Pesquisador. Se for dúvida simples, mande direto para o Escritor. Você decide quem trabalha. Responda apenas com a palavra PESQUISADOR ou ESCRITOR.";
-  const res = await callLlama(sysPrompt, `${context}Pergunta do Marcos: "${query}"\nQual agente deve atuar primeiro?`);
-  console.log("[Supervisor] Decisão:", res);
+  const sysPrompt = "Você é o Supervisor de Roteamento da API EscolaIA. Sua ÚNICA função é ler a [Pergunta do Marcos] e o [Histórico Recente]. REGRA 1: Se o Marcos mencionar 'isso', 'aquilo', 'o vídeo' ou algo do histórico, LEIA O HISTÓRICO para entender o contexto. REGRA 2: Se a pergunta necessitar de fatos ATUAIS da internet ou transcrições de vídeos do YouTube, responda EXATAMENTE E APENAS COM A PALAVRA: PESQUISADOR. Caso contrário (dúvidas normais, continuação do papo), responda EXATAMENTE E APENAS COM A PALAVRA: ESCRITOR. Não diga mais nada.";
+  const res = await callLlama(sysPrompt, `${context}Pergunta do Marcos: "${query}"\nQual agente deve atuar primeiro (PESQUISADOR ou ESCRITOR)?`);
+  console.log("[Supervisor] Decisão (70B):", res);
   return res.toUpperCase().includes("PESQUISADOR");
 }
 
@@ -178,21 +178,20 @@ async function runPesquisador(query: string): Promise<string> {
   const ytRegex = /(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/;
   const match = query.match(ytRegex);
 
-  let fetchedData = "";
+  let searchResults = "";
   if (match) {
-    fetchedData = await buscarYouTube(match[0]);
+    searchResults = await buscarYouTube(match[0]);
   } else {
-    fetchedData = await buscarContexto(query);
+    searchResults = await buscarContexto(query);
   }
 
-  const sysPrompt = "Sua função é usar a internet e as legendas do YouTube. Traga apenas os fatos reais, links e o que foi dito nos vídeos. Não dê opinião, apenas dados.";
-  const msg = `Dados brutos coletados:\n${fetchedData}\n\nSintetize os fatos encontrados para a equipe:`;
-  return await callLlama(sysPrompt, msg);
+  const sysPrompt = "Você é o 'Pesquisador'. Sua função MÁXIMA é extrair fatos. NÃO opine. NÃO crie didática.";
+  return await callLlama(sysPrompt, `Pergunta original: ${query}\nExtraia os dados reais desta busca:\n${searchResults}`);
 }
 
 async function runEscritor(query: string, researchData: string, chatHistory: ChatMessage[]): Promise<string> {
-  const sysPrompt = "Você é um professor brilhante. Crie a explicação didática baseada no histórico de conversa, no que o Pesquisador achou (se houver) ou no seu próprio conhecimento.";
-  const msg = `Pergunta: "${query}"\nFatos Pesquisados: "${researchData || 'Nenhum fato extra. Use seu conhecimento.'}"\nEscreva a explicação:`;
+  const sysPrompt = "Você é o Professor Especialista (Escritor). Crie a explicação didática baseada no [Histórico de Conversa] e nos [Fatos Pesquisados]. SE a pergunta do aluno se referir a algo do histórico ('como assim?', 'e aquilo?'), LEIA O HISTÓRICO. Seja MUITO lógico, direto e evite enrolações (0.3 temperature).";
+  const msg = `Pergunta Atual: "${query}"\nFatos da Internet: "${researchData || 'VAZIO'}"\nEscreva a melhor aula possível:`;
   return await callLlama(sysPrompt, msg, chatHistory);
 }
 
