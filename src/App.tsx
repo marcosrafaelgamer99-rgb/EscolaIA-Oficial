@@ -3,7 +3,7 @@ import { Send, Sparkles, Calculator, X, Copy, RotateCcw, StickyNote, ArrowRightL
 import { motion, AnimatePresence } from 'motion/react';
 import ReactMarkdown from 'react-markdown';
 import { chatWithAI } from './services/gemini';
-import { processarDuvidaEscolar, AgentState, AgentStateMessages } from './services/huggingface';
+import { processarDuvidaEscolar, AgentState, AgentStateMessages, ChatMessage } from './services/huggingface';
 import { AUTHORIZED_CODES } from './codigos';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -174,16 +174,19 @@ export default function App() {
     setIsLoading(true);
 
     try {
-      const history = messages.map(m => ({
-        role: m.role,
-        parts: [{ text: m.content }]
-      }));
+      const recentHistory: ChatMessage[] = messages
+        .slice(-10) // Mantém apenas as últimas 10 mensagens para não estourar os tokens
+        .map(m => ({
+          role: m.role === 'model' ? 'assistant' : 'user',
+          content: m.content
+        }));
 
       // Chama o Cérebro Multi-Agente Llama-3.2 v3.0 com a preferência de pesquisa
       const responseText = await processarDuvidaEscolar(
         textToSend,
         (state) => setAgentState(state),
-        modoPesquisaAtivado
+        modoPesquisaAtivado,
+        recentHistory
       );
       
       let finalContent = responseText || 'Desculpe, tive um problema ao processar sua resposta.';

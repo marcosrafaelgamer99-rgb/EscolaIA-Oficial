@@ -15,6 +15,11 @@ export type AgentState =
   | 'analista' 
   | 'humanizador';
 
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 export const AgentStateMessages: Record<AgentState, string> = {
   idle: '',
   local: '⚡ Respondendo rápido (Modo Local)...',
@@ -33,7 +38,8 @@ export const AgentStateMessages: Record<AgentState, string> = {
 export async function processarDuvidaEscolar(
   query: string, 
   onStateChange: (state: AgentState) => void,
-  modoPesquisaAtivado: boolean = false
+  modoPesquisaAtivado: boolean = false,
+  chatHistory: ChatMessage[] = []
 ): Promise<string> {
   try {
     let researchData = "";
@@ -41,7 +47,7 @@ export async function processarDuvidaEscolar(
     if (modoPesquisaAtivado) {
       // 0. SUPERVISOR (Decisão de Rota)
       onStateChange('supervisor');
-      const needsResearch = await runSupervisor(query);
+      const needsResearch = await runSupervisor(query, chatHistory);
 
       if (needsResearch) {
         // 1. PESQUISADOR (Busca Fatos/YouTube)
@@ -57,7 +63,7 @@ export async function processarDuvidaEscolar(
 
     // 2. ESCRITOR (Base Didática)
     onStateChange('escritor');
-    const writerText = await runEscritor(query, researchData);
+    const writerText = await runEscritor(query, researchData, chatHistory);
 
     // 3. ANALISTA (Verificador de Fatos - Nível 8º Ano)
     onStateChange('analista');
@@ -81,9 +87,10 @@ export async function processarDuvidaEscolar(
 // FUNÇÕES DOS AGENTES (Integrações com HF)
 // ==========================================
 
-async function callLlama(sysPrompt: string, userMessage: string): Promise<string> {
+async function callLlama(sysPrompt: string, userMessage: string, chatHistory: ChatMessage[] = []): Promise<string> {
   const messages = [
     { role: "system", content: sysPrompt },
+    ...chatHistory,
     { role: "user", content: userMessage }
   ];
 
@@ -156,9 +163,13 @@ async function buscarYouTube(url: string): Promise<string> {
   }
 }
 
-async function runSupervisor(query: string): Promise<boolean> {
-  const sysPrompt = "Você coordena a equipe EscolaIA. Analise a pergunta do Marcos. Se precisar de fatos novos ou YouTube, chame o Pesquisador. Se for dúvida simples, mande direto para o Escritor. Você decide quem trabalha. Responda apenas com a palavra PESQUISADOR ou ESCRITOR.";
-  const res = await callLlama(sysPrompt, `Pergunta do Marcos: "${query}"\nQual agente deve atuar primeiro?`);
+async function runSupervisor(query: string, chatHistory: ChatMessage[]): Promise<boolean> {
+  let context = "";
+  if (chatHistory.length > 0) {
+    context = `[Histórico Recente]:\n${chatHistory.map(h => `${h.role}: ${h.content}`).join("\n")}\n\n`;
+  }
+  const sysPrompt = "Você coordena a equipe EscolaIA. Analise a pergunta do Marcos e o histórico recente. Se precisar de fatos novos ou YouTube, chame o Pesquisador. Se for dúvida simples, mande direto para o Escritor. Você decide quem trabalha. Responda apenas com a palavra PESQUISADOR ou ESCRITOR.";
+  const res = await callLlama(sysPrompt, `${context}Pergunta do Marcos: "${query}"\nQual agente deve atuar primeiro?`);
   console.log("[Supervisor] Decisão:", res);
   return res.toUpperCase().includes("PESQUISADOR");
 }
@@ -179,10 +190,10 @@ async function runPesquisador(query: string): Promise<string> {
   return await callLlama(sysPrompt, msg);
 }
 
-async function runEscritor(query: string, researchData: string): Promise<string> {
-  const sysPrompt = "Você é um professor brilhante. Crie a explicação didática baseada no que o Pesquisador achou (se houver) ou no seu próprio conhecimento.";
+async function runEscritor(query: string, researchData: string, chatHistory: ChatMessage[]): Promise<string> {
+  const sysPrompt = "Você é um professor brilhante. Crie a explicação didática baseada no histórico de conversa, no que o Pesquisador achou (se houver) ou no seu próprio conhecimento.";
   const msg = `Pergunta: "${query}"\nFatos Pesquisados: "${researchData || 'Nenhum fato extra. Use seu conhecimento.'}"\nEscreva a explicação:`;
-  return await callLlama(sysPrompt, msg);
+  return await callLlama(sysPrompt, msg, chatHistory);
 }
 
 async function runAnalista(textToAnalyse: string): Promise<string> {
