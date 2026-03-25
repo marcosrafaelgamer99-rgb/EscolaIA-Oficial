@@ -60,10 +60,10 @@ export async function processarDuvidaEscolar(
     onStateChange('idle');
     return finalAnswer;
 
-  } catch (error) {
+  } catch (error: any) {
     onStateChange('idle');
     console.error("Erro no fluxo Llama-3.2-1B Multi-Agente:", error);
-    throw new Error("Falha na rede Neural. Tente enviar de novo.");
+    throw new Error(`Falha na rede Neural: ${error.message || 'Erro Desconhecido'}`);
   }
 }
 
@@ -77,25 +77,35 @@ async function callLlama(sysPrompt: string, userMessage: string): Promise<string
     { role: "user", content: userMessage }
   ];
 
-  // Simulando fallback seguro se a VITE_HF_TOKEN não escalar ou demorar em plano free
   try {
-    const response = await hf.chatCompletion({
-      model: MODEL_NAME,
-      messages: messages as any,
-      max_tokens: 500,
-      temperature: 0.7,
+    const url = `https://api-inference.huggingface.co/models/${MODEL_NAME}/v1/chat/completions`;
+    
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${hfToken}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: MODEL_NAME,
+        messages: messages,
+        max_tokens: 500,
+        temperature: 0.7
+      })
     });
-    return response.choices[0].message.content || "";
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error("[Hugging Face API Error Response]:", errorData);
+      console.error("[Status Code]:", response.status);
+      throw new Error(`HF API HTTP ${response.status}: ${errorData}`);
+    }
+
+    const data = await response.json();
+    return data.choices[0].message.content || "";
   } catch (error) {
-    console.warn("Retrying with generation method or adjusting token sizes...", error);
-    // Para simplificar a demonstração no plano free (as vezes chatCompletion engasga no 1B):
-    const promptString = `${sysPrompt}\n\nUser: ${userMessage}\n\nAssistant:`;
-    const res = await hf.textGeneration({
-      model: MODEL_NAME,
-      inputs: promptString,
-      parameters: { max_new_tokens: 400, return_full_text: false }
-    });
-    return res.generated_text;
+    console.error("[callLlama] Exceção Capturada:", error);
+    throw error;
   }
 }
 
